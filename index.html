@@ -54,15 +54,20 @@
     .neu-label {display:flex; align-items:center; gap:8px; font-weight:bold;}
     .neu-label input[type=checkbox] {margin-right:6px;}
     .neu-label span {font-weight:bold;}
+    #new-books {
+      max-width: 400px;
+      width: 100%;
+      margin: 0 auto 12px auto;
+      overflow-x: auto;
+    }
     #new-books-scroll {
       display: flex;
-      gap: 18px;
-      overflow-x: auto;
+      gap: 14px;
       padding-bottom: 8px;
     }
     #new-books-scroll .book {
-      min-width: 280px;
-      max-width: 320px;
+      min-width: 180px;
+      max-width: 200px;
       flex: 0 0 auto;
     }
     /* Vollbildkamera Overlay */
@@ -119,6 +124,11 @@
     #admin-action-modal-inner {
       background:#fff;padding:28px 22px;border-radius:16px;box-shadow:0 8px 36px #007aff22;min-width:240px;max-width:340px;text-align:center;
     }
+    /* Verliehen Übersicht Tabs */
+    #verliehen-uebersicht {background:#fff; border-radius:12px; box-shadow:0 2px 12px #007aff16; padding:16px; margin-bottom:18px;}
+    #gruppen-tabs button {margin:2px 6px 9px 0; padding:6px 16px; border-radius:7px; border:1px solid #b6d8ff; background:#eaf3ff; color:#007aff; cursor:pointer;}
+    #gruppen-tabs button.active {background:#007aff; color:#fff;}
+    #gruppen-content ul {margin:0 0 0 16px;}
   </style>
 </head>
 <body>
@@ -164,11 +174,19 @@
       <button class="backup-btn" onclick="confirmAdminAction('reset')">Alle Daten löschen</button>
       <div id="log-output"></div>
     </div>
+    <div id="verliehen-uebersicht" class="hidden">
+      <h3>Derzeit verliehen:</h3>
+      <div id="gruppen-tabs"></div>
+      <div id="gruppen-content"></div>
+    </div>
     <!-- Kamera-Vollbild Overlay -->
     <div id="camera-overlay">
       <video id="camera-video-full" autoplay playsinline></video>
       <button id="camera-shutter-btn" onclick="takePhotoFull()">📸</button>
       <button id="camera-close-btn" onclick="closeCameraFull()">&times;</button>
+      <div style="position:absolute;bottom:88px;left:0;right:0;text-align:center;color:#fff;font-size:1.1em;text-shadow:0 1px 4px #000;">
+        Bitte Buch hoch ins Bild halten!
+      </div>
     </div>
     <!-- Admin-Action Passwort-Modal -->
     <div id="admin-action-modal">
@@ -190,6 +208,7 @@
     let editingIdx = null;
     let cameraStream = null;
     let photoTargetArea = null; // Für Kamera-Vollbild
+    let verliehenGruppeIdx = 0;
 
     const gruppenSymbole = ["⭐","☀️","🌙","🌈","💧","❄️","🗣️"];
     const gruppenNamen = ["Sterne","Sonne","Mond","Regenbogen","Regentropfen","Schneeflocken","Sprachförderung"];
@@ -333,6 +352,7 @@
       renderNewBooks();
       updateLog();
       saveData();
+      renderVerliehenUebersicht(gruppeIdx);
     }
     function zurueckgebenStart(idx) {
       if(books[idx].status!=="ausgeliehen") return;
@@ -353,6 +373,7 @@
       renderNewBooks();
       updateLog();
       saveData();
+      renderVerliehenUebersicht(verliehenGruppeIdx);
     }
 
     function showAdminLogin() {
@@ -369,6 +390,7 @@
         document.getElementById("backup-section").classList.remove("hidden");
         renderBooks(document.getElementById("search").value);
         renderNewBooks();
+        renderVerliehenUebersicht(verliehenGruppeIdx);
       } else {
         alert("Falsches Passwort!");
       }
@@ -379,6 +401,7 @@
       document.getElementById("admin-login-btn").style.display="inline-block";
       document.getElementById("admin-login").classList.add("hidden");
       document.getElementById("backup-section").classList.add("hidden");
+      document.getElementById("verliehen-uebersicht").classList.add("hidden");
       renderBooks(document.getElementById("search").value);
       renderNewBooks();
     }
@@ -442,7 +465,7 @@
       renderNewBooks();
     }
 
-    // KAMERA Vollbild
+    // KAMERA Vollbild, 3:4 Hochformat
     function openCamera(mode) {
       photoTargetArea = mode==="new" ? "new-img-area" : "edit-img-area";
       document.getElementById("camera-overlay").style.display = "flex";
@@ -462,15 +485,24 @@
     }
     function takePhotoFull() {
       const video = document.getElementById("camera-video-full");
+      // Ziel: Hochformat 3:4 (z.B. 300x400px)
+      let targetWidth = 300, targetHeight = 400;
       const canvas = document.createElement("canvas");
-      const maxDim = 400;
-      const w = video.videoWidth, h = video.videoHeight;
-      let scale = Math.min(1, maxDim / Math.max(w, h));
-      canvas.width = Math.round(w * scale);
-      canvas.height = Math.round(h * scale);
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
       const ctx = canvas.getContext("2d");
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const dataURL = canvas.toDataURL("image/jpeg", 0.65);
+
+      // Berechne mittigen Ausschnitt im Hochformat (von breitem Video)
+      let srcW = video.videoWidth, srcH = video.videoHeight;
+      let scale = Math.min(srcW / targetWidth, srcH / targetHeight);
+
+      let cropW = targetWidth * scale;
+      let cropH = targetHeight * scale;
+      let sx = (srcW - cropW) / 2;
+      let sy = (srcH - cropH) / 2;
+      ctx.drawImage(video, sx, sy, cropW, cropH, 0, 0, targetWidth, targetHeight);
+      
+      const dataURL = canvas.toDataURL("image/jpeg", 0.7);
       document.getElementById(photoTargetArea).innerHTML = `<img src="${dataURL}" class="img-preview">`;
       document.getElementById(photoTargetArea).dataset.img = dataURL;
       closeCameraFull();
@@ -525,6 +557,7 @@
           renderBooks(document.getElementById("search").value);
           renderNewBooks();
           updateLog();
+          renderVerliehenUebersicht(verliehenGruppeIdx);
         } catch {
           alert("Fehler beim Laden!");
         }
@@ -536,6 +569,7 @@
         books = []; log = [];
         saveData();
         renderBooks(); renderNewBooks(); updateLog();
+        renderVerliehenUebersicht(verliehenGruppeIdx);
       }
     }
     function saveData() {
@@ -544,6 +578,43 @@
     }
     function updateLog() {
       document.getElementById("log-output").innerText = log.slice(-30).join("\n");
+    }
+
+    // Admin: Verliehen Übersicht mit Tabs
+    function renderVerliehenUebersicht(selectedGruppeIdx = 0) {
+      verliehenGruppeIdx = selectedGruppeIdx;
+      if (!admin) {
+        document.getElementById("verliehen-uebersicht").classList.add("hidden");
+        return;
+      }
+      document.getElementById("verliehen-uebersicht").classList.remove("hidden");
+      // Tabs
+      let tabs = "";
+      gruppenNamen.forEach((grp, i) => {
+        tabs += `<button onclick="renderVerliehenUebersicht(${i})" class="${i==selectedGruppeIdx?'active':''}">${grp} ${gruppenSymbole[i]}</button>`;
+      });
+      document.getElementById("gruppen-tabs").innerHTML = tabs;
+      // Daten für diese Gruppe
+      const aktuellGeliehen = books.filter(b => b.status === "ausgeliehen" && b.borrower === gruppenNamen[selectedGruppeIdx]);
+      let content = `<b>${aktuellGeliehen.length}</b> Buch${aktuellGeliehen.length !== 1 ? "er" : ""} momentan verliehen.<br><ul>`;
+      aktuellGeliehen.forEach(b => {
+        // Datum aus Log holen
+        const ausleihLog = log.filter(entry =>
+          entry.includes(b.id) &&
+          entry.includes("ausgeliehen an " + b.borrower)
+        ).slice(-1)[0]; // Letzter Ausleihvorgang
+        const rueckLog = log.filter(entry =>
+          entry.includes(b.id) &&
+          entry.includes("zurückgegeben von " + b.borrower)
+        ).slice(-1)[0]; // Letzte Rückgabe
+        let ausleihDatum = ausleihLog ? ausleihLog.split(":")[0] : "?";
+        let rueckDatum = rueckLog ? rueckLog.split(":")[0] : "";
+        content += `<li><b>${b.title}</b><br>
+           Geliehen: ${ausleihDatum}${rueckDatum ? "<br>Zurück: "+rueckDatum : ""}
+          </li>`;
+      });
+      content += "</ul>";
+      document.getElementById("gruppen-content").innerHTML = content;
     }
 
     function showQRModal() {
