@@ -45,6 +45,7 @@
     #admin-panel textarea { min-height: 60px;}
     #log-output { font-size:0.95em; background:#f8fafc; padding:10px; border-radius:8px; margin-bottom:8px; max-height:120px; overflow-y:auto; border:1px solid #e6e8fa;}
     #backup-section {margin-top:32px; margin-bottom:24px; background:#fff; border-radius:14px; box-shadow:0 2px 12px #007aff16; padding:18px;}
+    #backup-section.hidden {display: none;}
     .backup-btn {margin:4px; padding:8px 16px; border-radius:8px; border:1px solid #b6d8ff; background:#eaf3ff; color:#007aff; cursor:pointer;}
     .backup-btn:hover {background:#b6d8ff;}
     .camera-btn {margin-left:8px; background:#eaf3ff; color:#007aff; border:none; border-radius:7px; padding:6px 12px;}
@@ -63,6 +64,60 @@
       min-width: 280px;
       max-width: 320px;
       flex: 0 0 auto;
+    }
+    /* Vollbildkamera Overlay */
+    #camera-overlay {
+      position: fixed;
+      z-index: 9999;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #000b;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    #camera-video-full {
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      background: #222;
+    }
+    #camera-shutter-btn {
+      position: absolute;
+      left: 50%; bottom: 7vh;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.6);
+      border: none;
+      border-radius: 50%;
+      width: 80px; height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.6em;
+      color: #007aff;
+      box-shadow: 0 4px 24px #0005;
+      cursor: pointer;
+    }
+    #camera-close-btn {
+      position: absolute;
+      top: 28px; right: 28px;
+      background: rgba(0,0,0,0.25);
+      color: #fff;
+      border: none;
+      border-radius: 100px;
+      font-size: 2em;
+      width: 48px; height: 48px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+    }
+    /* Admin-Action Modal */
+    #admin-action-modal {
+      display:none; position:fixed;top:0;left:0;right:0;bottom:0;
+      background:rgba(0,0,0,.23);align-items:center;justify-content:center;z-index:99999;
+    }
+    #admin-action-modal-inner {
+      background:#fff;padding:28px 22px;border-radius:16px;box-shadow:0 8px 36px #007aff22;min-width:240px;max-width:340px;text-align:center;
     }
   </style>
 </head>
@@ -97,17 +152,33 @@
       <label class="neu-label"><input type="checkbox" id="new-neu"><span>Neu</span></label>
       <textarea id="new-desc" placeholder="Beschreibung"></textarea>
       <div id="new-img-area"></div>
-      <button class="camera-btn" onclick="openCamera('new')">📷 Bild aufnehmen</button>
+      <button class="camera-btn" style="font-size:1.4em;" onclick="openCamera('new')">📷 Bild aufnehmen</button>
       <button onclick="addBook()">➕ Hinzufügen</button>
       <button onclick="logoutAdmin()">Logout</button>
     </div>
     <div id="backup-section" class="hidden">
       <h3>Backup</h3>
-      <button class="backup-btn" onclick="exportData()">Backup erstellen</button>
+      <button class="backup-btn" onclick="confirmAdminAction('export')">Backup erstellen</button>
       <input type="file" id="import-file" accept=".json" onchange="importData(event)" style="display:none;">
-      <button class="backup-btn" onclick="document.getElementById('import-file').click()">Backup hochladen</button>
-      <button class="backup-btn" onclick="resetData()">Alle Daten löschen</button>
+      <button class="backup-btn" onclick="confirmAdminAction('import')">Backup hochladen</button>
+      <button class="backup-btn" onclick="confirmAdminAction('reset')">Alle Daten löschen</button>
       <div id="log-output"></div>
+    </div>
+    <!-- Kamera-Vollbild Overlay -->
+    <div id="camera-overlay">
+      <video id="camera-video-full" autoplay playsinline></video>
+      <button id="camera-shutter-btn" onclick="takePhotoFull()">📸</button>
+      <button id="camera-close-btn" onclick="closeCameraFull()">&times;</button>
+    </div>
+    <!-- Admin-Action Passwort-Modal -->
+    <div id="admin-action-modal">
+      <div id="admin-action-modal-inner">
+        <div id="admin-action-msg"></div>
+        <input type="password" id="admin-action-pw" placeholder="Admin-Passwort" style="width:120px;margin:8px 0;">
+        <br>
+        <button onclick="doAdminAction()">Bestätigen</button>
+        <button onclick="closeAdminActionModal()">Abbrechen</button>
+      </div>
     </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
@@ -118,6 +189,7 @@
     let admin = false;
     let editingIdx = null;
     let cameraStream = null;
+    let photoTargetArea = null; // Für Kamera-Vollbild
 
     const gruppenSymbole = ["⭐","☀️","🌙","🌈","💧","❄️","🗣️"];
     const gruppenNamen = ["Sterne","Sonne","Mond","Regenbogen","Regentropfen","Schneeflocken","Sprachförderung"];
@@ -345,7 +417,7 @@
         <label class="neu-label"><input type="checkbox" id="edit-neu" ${b.neu?"checked":""}><span>Neu</span></label>
         <textarea id="edit-desc">${b.description||""}</textarea>
         <div id="edit-img-area"></div>
-        <button class="camera-btn" onclick="openCamera('edit')">📷 Bild aufnehmen</button>
+        <button class="camera-btn" style="font-size:1.4em;" onclick="openCamera('edit')">📷 Bild aufnehmen</button>
         <button class="save-btn" onclick="saveEdit()">Speichern</button>
         <button onclick="closeModal()">Abbrechen</button>`;
       document.getElementById("modal-content").innerHTML = html;
@@ -370,45 +442,64 @@
       renderNewBooks();
     }
 
+    // KAMERA Vollbild
     function openCamera(mode) {
-      let areaId = mode==="new" ? "new-img-area" : "edit-img-area";
-      let html = `<video id="camera-video" style="width:260px; border-radius:12px;"></video><br>
-      <button onclick="takePhoto('${areaId}')">Foto aufnehmen</button>
-      <button onclick="closeCamera()">Abbrechen</button>`;
-      if(mode==="edit"){
-        document.getElementById("modal-content").innerHTML += `<div id="camera-area">${html}</div>`;
-      }else{
-        document.getElementById(areaId).innerHTML = `<div id="camera-area">${html}</div>`;
-      }
-      navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(stream=>{
-        cameraStream = stream;
-        const video = document.getElementById("camera-video");
-        video.srcObject = stream;
-        video.setAttribute("playsinline",true);
-        video.play();
-      });
+      photoTargetArea = mode==="new" ? "new-img-area" : "edit-img-area";
+      document.getElementById("camera-overlay").style.display = "flex";
+      const video = document.getElementById("camera-video-full");
+      navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}})
+        .then(stream => {
+          cameraStream = stream;
+          video.srcObject = stream;
+          video.play();
+        });
     }
-    function closeCamera() {
-      if(cameraStream) cameraStream.getTracks().forEach(track=>track.stop());
+    function closeCameraFull() {
+      if(cameraStream) cameraStream.getTracks().forEach(track => track.stop());
       cameraStream = null;
-      const area = document.getElementById("camera-area");
-      if(area) area.remove();
+      document.getElementById("camera-video-full").srcObject = null;
+      document.getElementById("camera-overlay").style.display = "none";
     }
-    function takePhoto(areaId) {
-      const video = document.getElementById("camera-video");
+    function takePhotoFull() {
+      const video = document.getElementById("camera-video-full");
       const canvas = document.createElement("canvas");
       const maxDim = 400;
-      const w = video.videoWidth;
-      const h = video.videoHeight;
+      const w = video.videoWidth, h = video.videoHeight;
       let scale = Math.min(1, maxDim / Math.max(w, h));
       canvas.width = Math.round(w * scale);
       canvas.height = Math.round(h * scale);
       const ctx = canvas.getContext("2d");
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       const dataURL = canvas.toDataURL("image/jpeg", 0.65);
-      document.getElementById(areaId).innerHTML = `<img src="${dataURL}" class="img-preview">`;
-      document.getElementById(areaId).dataset.img = dataURL;
-      closeCamera();
+      document.getElementById(photoTargetArea).innerHTML = `<img src="${dataURL}" class="img-preview">`;
+      document.getElementById(photoTargetArea).dataset.img = dataURL;
+      closeCameraFull();
+    }
+
+    // Backup-Bereich mit Passwort-Abfrage
+    let adminAction = null;
+    function confirmAdminAction(action) {
+      adminAction = action;
+      let msg = "";
+      if(action==="export") msg = "Backup erstellen. Bitte Admin-Passwort eingeben:";
+      if(action==="import") msg = "Backup hochladen. Bitte Admin-Passwort eingeben:";
+      if(action==="reset") msg = "Alle Daten löschen. Bitte Admin-Passwort eingeben:";
+      document.getElementById("admin-action-msg").innerText = msg;
+      document.getElementById("admin-action-pw").value = "";
+      document.getElementById("admin-action-modal").style.display = "flex";
+    }
+    function closeAdminActionModal() {
+      adminAction = null;
+      document.getElementById("admin-action-modal").style.display = "none";
+    }
+    function doAdminAction() {
+      const pw = document.getElementById("admin-action-pw").value;
+      if(pw!=="kitadmin") { alert("Falsches Passwort!"); return;}
+      document.getElementById("admin-action-modal").style.display = "none";
+      if(adminAction==="export") exportData();
+      if(adminAction==="import") document.getElementById('import-file').click();
+      if(adminAction==="reset") resetData();
+      adminAction = null;
     }
 
     function exportData() {
