@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kindergarten-Bibliothek</title>
-  <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/5/57/Book_icon_2.png">
   <style>
-    /* --- Minimal styles für Layout und Buttons --- */
     body { font-family: Arial, sans-serif; background: #f9faff; margin: 0;}
     .container { max-width: 900px; margin: 0 auto; padding: 24px;}
     .header { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px;}
@@ -15,15 +13,22 @@
     #search { padding: 8px; font-size: 1em; border-radius: 7px; border: 1.5px solid #b6d8ff;}
     .qr-button, .clear-search-button { background: #fff; color: #007aff; border: none; border-radius: 7px; font-size: 1.1em; padding: 8px; cursor: pointer;}
     .qr-button:hover, .clear-search-button:hover { background: #eaf3ff;}
-    .admin-corner { margin-top: 24px;}
-    #new-books { margin-top:18px; margin-bottom: 16px;}
-    .new-books-box { background: #fffbe8; border: 1.5px solid #ffe5b3; border-radius: 14px; padding: 16px; margin-bottom: 16px;}
     .pagination { margin: 24px 0; text-align: center;}
     .pagination button { margin:2px; padding:7px 14px; border-radius:7px; border:1px solid #b6d8ff; background:#fff; color:#007aff; cursor:pointer;}
     .pagination button.active { background:#007aff; color:#fff; font-weight: bold;}
     .book { display: flex; gap:22px; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px #eee; margin-bottom: 18px; padding: 12px;}
     .book img.cover { max-width: 90px; border-radius: 8px; }
     .book-details { flex: 1;}
+    .status-verfuegbar { font-weight: bold; color: #228B22; }
+    .status-verfuegbar .symbol { color: #228B22; font-size: 1.2em; vertical-align: middle;}
+    .status-geliehen { font-weight: bold; color: #CC2222; }
+    .status-geliehen .symbol { color: #CC2222; font-size: 1.2em; vertical-align: middle;}
+    .group-btn { margin: 2px; padding: 7px 12px; border-radius: 7px; border: 1.2px solid #eaf3ff; background: #eaf3ff; color: #007aff; cursor: pointer; font-weight: 600;}
+    .group-btn:hover { background:#b6d8ff;}
+    .edit-btn { background: #ffe5b3; color: #9a6a00; border:1px solid #e6b; border-radius:7px; padding:6px 10px;}
+    .edit-btn:hover { background:#fffbe8;}
+    .save-btn { background:#007aff; color:#fff; border:none; border-radius:7px; padding:6px 14px;}
+    .save-btn:hover { background:#0050a8;}
     #modal, #qr-modal {position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.23); display:none; align-items:center; justify-content:center; z-index:10;}
     #modal-content, #qr-modal-content { background:#fff; border-radius:16px; min-width:280px; max-width:350px; padding:24px; box-shadow:0 8px 36px #007aff22;}
     #admin-login, #admin-panel { background:#fff; border-radius:12px; box-shadow: 0 3px 14px #007aff17; padding:18px; margin-bottom:16px;}
@@ -31,12 +36,12 @@
     #admin-panel input, #admin-panel textarea, #admin-panel select { margin:4px 0 8px 0; padding:7px; width:95%; border-radius:7px; border:1.2px solid #b6d8ff;}
     #admin-panel textarea { min-height: 60px;}
     #log-output { font-size:0.95em; background:#f8fafc; padding:10px; border-radius:8px; margin-bottom:8px; max-height:120px; overflow-y:auto; border:1px solid #e6e8fa;}
-    .group-btn { margin: 2px; padding: 7px 12px; border-radius: 7px; border: 1.2px solid #eaf3ff; background: #eaf3ff; color: #007aff; cursor: pointer; font-weight: 600;}
-    .group-btn:hover { background:#b6d8ff;}
-    .edit-btn { background: #ffe5b3; color: #9a6a00; border:1px solid #e6b; border-radius:7px; padding:6px 10px;}
-    .edit-btn:hover { background:#fffbe8;}
-    .save-btn { background:#007aff; color:#fff; border:none; border-radius:7px; padding:6px 14px;}
-    .save-btn:hover { background:#0050a8;}
+    #backup-section {margin-top:32px; margin-bottom:24px; background:#fff; border-radius:14px; box-shadow:0 2px 12px #007aff16; padding:18px;}
+    .backup-btn {margin:4px; padding:8px 16px; border-radius:8px; border:1px solid #b6d8ff; background:#eaf3ff; color:#007aff; cursor:pointer;}
+    .backup-btn:hover {background:#b6d8ff;}
+    .camera-btn {margin-left:8px; background:#eaf3ff; color:#007aff; border:none; border-radius:7px; padding:6px 12px;}
+    .camera-btn:hover {background:#b6d8ff;}
+    .img-preview {max-width:110px; border-radius:8px; margin-bottom:8px;}
   </style>
 </head>
 <body>
@@ -56,49 +61,48 @@
     <div class="pagination" id="pagination"></div>
     <div id="modal"><div id="modal-content"></div></div>
     <div id="qr-modal"><div id="qr-modal-content"></div></div>
-    <div class="admin-corner">
-      <div id="admin-login" class="hidden">
-        <input type="password" id="admin-pw" placeholder="Admin-Passwort" style="width: 120px;">
-        <button onclick="checkAdmin()">Login</button>
-      </div>
-      <div id="admin-panel" class="hidden">
-        <h3>Buch hinzufügen</h3>
-        <input id="new-id" placeholder="ID (z.B. B-0003)">
-        <input id="new-title" placeholder="Titel">
-        <input id="new-cat" placeholder="Kategorie">
-        <input id="new-age" placeholder="Alter (z.B. 3-6)">
-        <label><input type="checkbox" id="new-neu"> Neu</label>
-        <textarea id="new-desc" placeholder="Beschreibung"></textarea>
-        <input id="new-img" placeholder="Bild-URL (optional)">
-        <button onclick="addBook()">➕ Hinzufügen</button>
-        <button onclick="exportData()">📁 Backup erstellen</button>
-        <input type="file" id="import-file" accept=".json" onchange="importData(event)" style="display:none;">
-        <button onclick="document.getElementById('import-file').click()">📂 Backup laden</button>
-        <button onclick="logoutAdmin()">Logout</button>
-        <h3>Bücher bearbeiten</h3>
-        <div id="edit-list"></div>
-        <h3>Ausleihverlauf</h3>
-        <div id="log-output"></div>
-        <button onclick="resetData()">Alles zurücksetzen</button>
-      </div>
-      <button id="admin-login-btn" onclick="showAdminLogin()">🔑 Admin</button>
+    <div id="admin-login" class="hidden">
+      <input type="password" id="admin-pw" placeholder="Admin-Passwort" style="width: 120px;">
+      <button onclick="checkAdmin()">Login</button>
+    </div>
+    <button id="admin-login-btn" onclick="showAdminLogin()">🔑 Admin</button>
+    <div id="admin-panel" class="hidden">
+      <h3>Buch hinzufügen</h3>
+      <input id="new-id" placeholder="ID (z.B. B-0003)">
+      <input id="new-title" placeholder="Titel">
+      <input id="new-cat" placeholder="Kategorie">
+      <input id="new-age" placeholder="Alter (z.B. 3-6)">
+      <label><input type="checkbox" id="new-neu"> Neu</label>
+      <textarea id="new-desc" placeholder="Beschreibung"></textarea>
+      <div id="new-img-area"></div>
+      <button class="camera-btn" onclick="openCamera('new')">📷 Bild aufnehmen</button>
+      <button onclick="addBook()">➕ Hinzufügen</button>
+      <button onclick="logoutAdmin()">Logout</button>
+    </div>
+    <div id="backup-section">
+      <h3>Backup</h3>
+      <button class="backup-btn" onclick="exportData()">Backup erstellen</button>
+      <input type="file" id="import-file" accept=".json" onchange="importData(event)" style="display:none;">
+      <button class="backup-btn" onclick="document.getElementById('import-file').click()">Backup hochladen</button>
+      <button class="backup-btn" onclick="resetData()">Alle Daten löschen</button>
+      <div id="log-output"></div>
     </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <script>
-    // --- Datenstruktur ---
     let books = [];
     let log = [];
     let page = 1;
     let admin = false;
     let editingIdx = null;
+    let cameraStream = null;
 
-    // --- Gruppen für Ausleihe ---
     const gruppen = ["Sterne","Sonne","Mond","Regenbogen","Regentropfen","Schneeflocken","Sprachförderung"];
-    // --- DUMMY-DATEN für Demo ---
+
+    // Dummy-Daten für Demo
     if(!localStorage.books) {
       books = [
-        {id:"B-0001", title:"Die kleine Raupe", category:"Bilderbuch", age:"3-6", status:"verfügbar", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/HungryCaterpillar.jpg/120px-HungryCaterpillar.jpg", neu:true, description:"Ein Klassiker für Kinder."},
+        {id:"B-0001", title:"Die kleine Raupe", category:"Bilderbuch", age:"3-6", status:"verfügbar", img:"", neu:true, description:"Ein Klassiker für Kinder."},
         {id:"B-0002", title:"Leo Lausemaus", category:"Vorlesebuch", age:"4-7", status:"verfügbar", img:"", neu:false, description:"Abenteuer von Leo Lausemaus."},
         {id:"B-0003", title:"Conni kommt", category:"Bilderbuch", age:"3-6", status:"verfügbar", img:"", neu:true, description:"Conni erlebt den Kindergarten."}
       ];
@@ -109,7 +113,7 @@
       log = JSON.parse(localStorage.log || "[]");
     }
 
-    // --- Anzeige ---
+    // Anzeige
     function renderBooks(searchVal="") {
       let filtered = books.filter(b => {
         let s = searchVal.trim().toLowerCase();
@@ -117,12 +121,10 @@
         return (b.title+b.id+b.category+b.age).toLowerCase().includes(s);
       });
 
-      // Pagination
       const total = filtered.filter(b=>!b.neu).length;
       const maxPage = Math.max(1,Math.ceil(total/30));
       if(page > maxPage) page = maxPage;
 
-      // Neue Bücher: nur Seite 1 und keine Suche!
       if(page === 1 && !searchVal) {
         renderNewBooks();
       } else {
@@ -132,6 +134,12 @@
       let html = "";
       let booksToShow = filtered.filter(b=>!b.neu).slice((page-1)*30, page*30);
       booksToShow.forEach((book,idx) => {
+        let statusHtml = '';
+        if(book.status === "verfügbar"){
+          statusHtml = `<span class="status-verfuegbar"><span class="symbol">📗</span> Verfügbar</span>`;
+        } else {
+          statusHtml = `<span class="status-geliehen"><span class="symbol">📕</span> Geliehen von ${book.borrower || "?"}</span>`;
+        }
         html += `
         <div class="book">
           ${book.img ? `<img src="${book.img}" class="cover" onclick="showImageModal(${books.indexOf(book)})">` : ""}
@@ -139,19 +147,17 @@
             <strong>${book.id} – ${book.title}</strong><br>
             Kategorie: ${book.category}<br>
             Alter: ${book.age}<br>
-            Status: ${
-              book.status === "verfügbar"
-                ? "verfügbar"
-                : `geliehen von ${book.borrower || "?"}`
-            }<br>
-            <button onclick="ausleihenStart(${books.indexOf(book)})">📕 Ausleihen</button>
-            <button onclick="zurueckgebenStart(${books.indexOf(book)})">📗 Zurückstellen</button>
+            Status: ${statusHtml}<br>
+            ${book.status === "verfügbar"
+                ? `<button onclick="ausleihenStart(${books.indexOf(book)})">Ausleihen</button>`
+                : `<button onclick="zurueckgebenStart(${books.indexOf(book)})">Zurückstellen</button>`
+            }
+            ${(admin ? `<button class="edit-btn" onclick="editBook(${books.indexOf(book)})">Bearbeiten</button>`:"")}
           </div>
         </div>`;
       });
       document.getElementById("book-list").innerHTML = html;
 
-      // Pagination
       let pagHtml = "";
       for(let i=1;i<=maxPage;i++) {
         pagHtml += `<button onclick="gotoPage(${i})" class="${i===page?'active':''}">${i}</button>`;
@@ -162,17 +168,26 @@
     function renderNewBooks() {
       const neu = books.filter(b=>b.neu);
       if(!neu.length) { document.getElementById("new-books").innerHTML = ""; return;}
-      let html = `<div class="new-books-box"><strong>Neue Bücher:</strong><br><br>`;
+      let html = `<div class="book"><strong>Neue Bücher:</strong><br><br>`;
       neu.forEach((book,idx)=>{
+        let statusHtml = '';
+        if(book.status === "verfügbar"){
+          statusHtml = `<span class="status-verfuegbar"><span class="symbol">📗</span> Verfügbar</span>`;
+        } else {
+          statusHtml = `<span class="status-geliehen"><span class="symbol">📕</span> Geliehen von ${book.borrower || "?"}</span>`;
+        }
         html += `<div class="book">
             ${book.img ? `<img src="${book.img}" class="cover" onclick="showImageModal(${books.indexOf(book)})">` : ""}
             <div class="book-details">
               <strong>${book.id} – ${book.title}</strong><br>
               Kategorie: ${book.category}<br>
               Alter: ${book.age}<br>
-              Status: ${book.status === "verfügbar" ? "verfügbar" : `geliehen von ${book.borrower || "?"}`}<br>
-              <button onclick="ausleihenStart(${books.indexOf(book)})">📕 Ausleihen</button>
-              <button onclick="zurueckgebenStart(${books.indexOf(book)})">📗 Zurückstellen</button>
+              Status: ${statusHtml}<br>
+              ${book.status === "verfügbar"
+                  ? `<button onclick="ausleihenStart(${books.indexOf(book)})">Ausleihen</button>`
+                  : `<button onclick="zurueckgebenStart(${books.indexOf(book)})">Zurückstellen</button>`
+              }
+              ${(admin ? `<button class="edit-btn" onclick="editBook(${books.indexOf(book)})">Bearbeiten</button>`:"")}
             </div>
           </div>`;
       });
@@ -180,21 +195,11 @@
       document.getElementById("new-books").innerHTML = html;
     }
 
-    function gotoPage(p) {
-      page = p; renderBooks(document.getElementById("search").value);
-    }
+    function gotoPage(p) { page = p; renderBooks(document.getElementById("search").value); }
+    function onSearchChange() { page = 1; renderBooks(document.getElementById("search").value);}
+    function clearSearch() { document.getElementById("search").value = ""; page = 1; renderBooks();}
 
-    function onSearchChange() {
-      page = 1;
-      renderBooks(document.getElementById("search").value);
-    }
-    function clearSearch() {
-      document.getElementById("search").value = "";
-      page = 1;
-      renderBooks();
-    }
-
-    // --- Modal Bild/Beschreibung ---
+    // Modal Bild/Beschreibung
     function showImageModal(idx) {
       const b = books[idx];
       let html = `<strong>${b.id} – ${b.title}</strong><br>`;
@@ -205,10 +210,9 @@
       document.getElementById("modal-content").innerHTML = html;
       document.getElementById("modal").style.display = "flex";
     }
-
     function closeModal() { document.getElementById("modal").style.display = "none"; }
 
-    // --- Ausleih-Flow ---
+    // Ausleih-Flow
     function ausleihenStart(idx) {
       if(books[idx].status!=="verfügbar") return;
       let modal = `<div style="text-align:center;">
@@ -260,7 +264,7 @@
       saveData();
     }
 
-    // --- Admin ---
+    // Admin-Login
     function showAdminLogin() {
       document.getElementById("admin-login").classList.remove("hidden");
       document.getElementById("admin-panel").classList.add("hidden");
@@ -272,7 +276,8 @@
         admin = true;
         document.getElementById("admin-login").classList.add("hidden");
         document.getElementById("admin-panel").classList.remove("hidden");
-        renderEditList();
+        renderBooks(document.getElementById("search").value);
+        renderNewBooks();
       } else {
         alert("Falsches Passwort!");
       }
@@ -282,9 +287,11 @@
       document.getElementById("admin-panel").classList.add("hidden");
       document.getElementById("admin-login-btn").style.display="inline-block";
       document.getElementById("admin-login").classList.add("hidden");
+      renderBooks(document.getElementById("search").value);
+      renderNewBooks();
     }
 
-    // --- Buch hinzufügen ---
+    // Buch hinzufügen
     function addBook() {
       const id = document.getElementById("new-id").value.trim();
       const title = document.getElementById("new-title").value.trim();
@@ -292,39 +299,23 @@
       const age = document.getElementById("new-age").value.trim();
       const neu = document.getElementById("new-neu").checked;
       const description = document.getElementById("new-desc").value.trim();
-      const img = document.getElementById("new-img").value.trim();
+      const img = document.getElementById("new-img-area").dataset.img || "";
       if(!id||!title||!category||!age) { alert("Bitte alle Pflichtfelder ausfüllen!"); return;}
       books.push({id,title,category,age,neu,description,img,status:"verfügbar"});
       saveData();
       renderBooks(document.getElementById("search").value);
       renderNewBooks();
-      renderEditList();
       document.getElementById("new-id").value = "";
       document.getElementById("new-title").value = "";
       document.getElementById("new-cat").value = "";
       document.getElementById("new-age").value = "";
       document.getElementById("new-neu").checked = false;
       document.getElementById("new-desc").value = "";
-      document.getElementById("new-img").value = "";
+      document.getElementById("new-img-area").innerHTML = "";
+      document.getElementById("new-img-area").dataset.img = "";
     }
 
-    // --- Bearbeiten ---
-    function renderEditList() {
-      let html = "";
-      books.forEach((b,i)=>{
-        html += `<div class="book">
-          ${b.img ? `<img src="${b.img}" class="cover">` : ""}
-          <div class="book-details">
-            <strong>${b.id} – ${b.title}</strong><br>
-            Kategorie: ${b.category}<br>
-            Alter: ${b.age}<br>
-            Status: ${b.status==="verfügbar"?"verfügbar":`geliehen von ${b.borrower||"?"}`}<br>
-            <button class="edit-btn" onclick="editBook(${i})">Bearbeiten</button>
-          </div>
-        </div>`;
-      });
-      document.getElementById("edit-list").innerHTML = html;
-    }
+    // Bearbeiten
     function editBook(idx) {
       editingIdx = idx;
       const b = books[idx];
@@ -335,11 +326,16 @@
         <input id="edit-age" value="${b.age}">
         <label><input type="checkbox" id="edit-neu" ${b.neu?"checked":""}> Neu</label>
         <textarea id="edit-desc">${b.description||""}</textarea>
-        <input id="edit-img" value="${b.img}">
+        <div id="edit-img-area"></div>
+        <button class="camera-btn" onclick="openCamera('edit')">📷 Bild aufnehmen</button>
         <button class="save-btn" onclick="saveEdit()">Speichern</button>
         <button onclick="closeModal()">Abbrechen</button>`;
       document.getElementById("modal-content").innerHTML = html;
       document.getElementById("modal").style.display = "flex";
+      if(b.img){
+        document.getElementById("edit-img-area").innerHTML = `<img src="${b.img}" class="img-preview">`;
+        document.getElementById("edit-img-area").dataset.img = b.img;
+      }
     }
     function saveEdit() {
       const b = books[editingIdx];
@@ -349,15 +345,57 @@
       b.age = document.getElementById("edit-age").value;
       b.neu = document.getElementById("edit-neu").checked;
       b.description = document.getElementById("edit-desc").value;
-      b.img = document.getElementById("edit-img").value;
+      b.img = document.getElementById("edit-img-area").dataset.img || "";
       saveData();
       closeModal();
       renderBooks(document.getElementById("search").value);
       renderNewBooks();
-      renderEditList();
     }
 
-    // --- Backup ---
+    // Bild aufnehmen (Kamera mit Komprimierung)
+    function openCamera(mode) {
+      let areaId = mode==="new" ? "new-img-area" : "edit-img-area";
+      let html = `<video id="camera-video" style="width:260px; border-radius:12px;"></video><br>
+      <button onclick="takePhoto('${areaId}')">Foto aufnehmen</button>
+      <button onclick="closeCamera()">Abbrechen</button>`;
+      if(mode==="edit"){
+        document.getElementById("modal-content").innerHTML += `<div id="camera-area">${html}</div>`;
+      }else{
+        document.getElementById(areaId).innerHTML = `<div id="camera-area">${html}</div>`;
+      }
+      navigator.mediaDevices.getUserMedia({video:true}).then(stream=>{
+        cameraStream = stream;
+        const video = document.getElementById("camera-video");
+        video.srcObject = stream;
+        video.setAttribute("playsinline",true);
+        video.play();
+      });
+    }
+    function closeCamera() {
+      if(cameraStream) cameraStream.getTracks().forEach(track=>track.stop());
+      cameraStream = null;
+      const area = document.getElementById("camera-area");
+      if(area) area.remove();
+    }
+    function takePhoto(areaId) {
+      const video = document.getElementById("camera-video");
+      const canvas = document.createElement("canvas");
+      // Komprimierung: maximal 400x400px, JPEG Qualität 0.65
+      const maxDim = 400;
+      const w = video.videoWidth;
+      const h = video.videoHeight;
+      let scale = Math.min(1, maxDim / Math.max(w, h));
+      canvas.width = Math.round(w * scale);
+      canvas.height = Math.round(h * scale);
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataURL = canvas.toDataURL("image/jpeg", 0.65);
+      document.getElementById(areaId).innerHTML = `<img src="${dataURL}" class="img-preview">`;
+      document.getElementById(areaId).dataset.img = dataURL;
+      closeCamera();
+    }
+
+    // Backup
     function exportData() {
       const data = {books,log};
       const blob = new Blob([JSON.stringify(data)], {type:"application/json"});
@@ -380,7 +418,6 @@
           saveData();
           renderBooks(document.getElementById("search").value);
           renderNewBooks();
-          renderEditList();
           updateLog();
         } catch {
           alert("Fehler beim Laden!");
@@ -392,7 +429,7 @@
       if(confirm("Wirklich alle Daten löschen?")) {
         books = []; log = [];
         saveData();
-        renderBooks(); renderNewBooks(); renderEditList(); updateLog();
+        renderBooks(); renderNewBooks(); updateLog();
       }
     }
     function saveData() {
@@ -400,12 +437,11 @@
       localStorage.log = JSON.stringify(log);
     }
 
-    // --- Ausleih-Log ---
     function updateLog() {
       document.getElementById("log-output").innerText = log.slice(-30).join("\n");
     }
 
-    // --- QR Suche ---
+    // QR Suche (Bugfix: nur scannen wenn Kamera bereit)
     function showQRModal() {
       let html = `<video id="qr-video" style="width:260px; border-radius:12px;"></video><br>
       <button onclick="closeQRModal()">Abbrechen</button>
@@ -435,6 +471,7 @@
       const ctx = canvas.getContext("2d");
       function loop() {
         if(!qrStream) return;
+        if(video.readyState !== video.HAVE_ENOUGH_DATA){ requestAnimationFrame(loop); return;}
         canvas.width = video.videoWidth; canvas.height = video.videoHeight;
         ctx.drawImage(video,0,0,canvas.width,canvas.height);
         const imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
@@ -451,7 +488,7 @@
       loop();
     }
 
-    // --- Start ---
+    // Start
     renderBooks();
     renderNewBooks();
     updateLog();
