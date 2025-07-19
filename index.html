@@ -63,6 +63,7 @@
     #log-output {white-space: pre; font-size: 0.95em; background: #eef; padding: 10px; border-radius: 6px; max-height:150px; overflow-y:auto;}
     #book-list {margin-top:20px;}
     #new-books {margin-top:0; margin-bottom:10px;}
+    .hidden { display: none; }
     button {font-size:1em; padding: 6px 12px; margin: 2px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; background: #f9f9f9;}
     button:hover { background: #e9e9e9; }
     button:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -116,11 +117,9 @@
   </div>
 
   <div id="book-list"></div>
-
   <div id="modal">
     <div id="modal-content"></div>
   </div>
-
   <div id="admin-panel" class="hidden">
     <h3>Buch hinzufügen</h3>
     <input id="new-id" placeholder="ID (z.B. B-0003)">
@@ -139,140 +138,44 @@
   </div>
 
   <script>
-    // Datenbank, Service Worker, Variablen wie gehabt ...
-
-    let db;
-    const dbName = 'KindergartenBibliothek';
-    const dbVersion = 1;
-    let books = [];
+    let books = [
+      {id:"B-001", title:"Titel 1", category:"Bilderbuch", keywords:"Löwe, Elefant", status:"verfügbar", age:"3-6", group:"", img:"", borrower:"", borrowDate:"", isNew:true, newSince:"2025-07-01T10:00:00.000Z", description:"Testbeschreibung"},
+      {id:"B-002", title:"Titel 2", category:"Sachbuch", keywords:"Ritter, Pferd", status:"verfügbar", age:"5-8", group:"", img:"", borrower:"", borrowDate:"", isNew:false, newSince:"", description:""}
+    ];
     let log = [];
     let adminMode = false;
     let currentPage = 1;
-    const booksPerPage = 30;
 
-    const groups = [
-      {name:"Sterne", symbol:"⭐️"},
-      {name:"Sonne", symbol:"☀️"},
-      {name:"Mond", symbol:"🌙"},
-      {name:"Regenbogen", symbol:"🌈"},
-      {name:"Regentropfen", symbol:"💧"},
-      {name:"Schneeflocken", symbol:"❄️"},
-      {name:"Sprachförderung", symbol:"🗣️"}
-    ];
-
-    let stream;
-    let qrScannerActive = false;
-    let qrScanInterval;
-
-    // ... Service Worker und IndexedDB-Initialisierung wie gehabt ...
-
-    // Bild-Modal & Beschreibung
-    function showImageModal(index) {
-      const book = books[index];
-      let modalHtml = `<div style="text-align:center;">`;
-      if (book.img && book.img.length > 0) {
-        modalHtml += `<img src="${book.img}" style="max-width:90vw;max-height:60vh;border-radius:10px;box-shadow:0 0 16px #999;"><br><br>`;
-      }
-      if (adminMode) {
-        modalHtml += `
-          <textarea id="book-desc" style="width:90%;height:80px;padding:8px;border-radius:7px;" placeholder="Beschreibung eingeben...">${book.description || ''}</textarea><br>
-          <button onclick="saveDescription(${index})">💾 Beschreibung speichern</button>
-        `;
-      } else if (book.description) {
-        modalHtml += `<div style="margin-top:10px;color:#333;background:#f9f9ef;padding:12px;border-radius:7px;">${book.description}</div>`;
-      }
-      modalHtml += `<br><button onclick="closeModal()">Schließen</button></div>`;
-      document.getElementById("modal-content").innerHTML = modalHtml;
-      document.getElementById("modal").style.display = "flex";
+    function showAdminLogin() {
+      document.getElementById("admin-login").classList.remove("hidden");
+      document.getElementById("admin-panel").classList.add("hidden");
+      adminMode = false;
     }
-
-    function saveDescription(index) {
-      books[index].description = document.getElementById("book-desc").value;
-      saveData();
-      closeModal();
-      renderBooks(document.getElementById("search").value);
+    function checkAdmin() {
+      const pw = document.getElementById("admin-pw").value;
+      if (pw === "Märchenschloss2025") {
+        adminMode = true;
+        document.getElementById("admin-login").classList.add("hidden");
+        document.getElementById("admin-panel").classList.remove("hidden");
+        renderBooks();
+        renderNewBooks();
+      } else {
+        alert("❌ Falsches Passwort");
+        document.getElementById("admin-pw").value = "";
+      }
+    }
+    function logoutAdmin() {
+      adminMode = false;
+      document.getElementById("admin-login").classList.remove("hidden");
+      document.getElementById("admin-panel").classList.add("hidden");
+      renderBooks();
       renderNewBooks();
     }
 
-    // Anzeige "Neue Bücher" mit Bild & klickbar!
-    function renderNewBooks() {
-      const container = document.getElementById("new-books");
-      const now = Date.now();
-      const sixWeeksMs = 6 * 7 * 24 * 60 * 60 * 1000;
-      let changed = false;
-      books.forEach(b => {
-        if (b.isNew && b.newSince && (now - new Date(b.newSince).getTime() > sixWeeksMs)) {
-          b.isNew = false;
-          b.newSince = "";
-          changed = true;
-        }
-      });
-      if (changed) saveData();
-      const newBooks = books.filter(b =>
-        b.isNew &&
-        b.newSince &&
-        (now - new Date(b.newSince).getTime() <= sixWeeksMs)
-      );
-      if (newBooks.length === 0) {
-        container.innerHTML = "";
-        return;
-      }
-      container.innerHTML = `
-        <div style="background:#fffbcc;border-radius:8px;padding:10px;margin-bottom:12px;">
-          <strong>✨ Neue Bücher:</strong>
-          <div style="display:flex;flex-wrap:wrap;gap:18px;margin-top:10px;">
-            ${newBooks.map(b => `
-              <div style="width:140px;text-align:center;">
-                <div>
-                  ${b.img && b.img.length > 0 ? `<img src="${b.img}" style="width:70px;height:100px;object-fit:cover;border-radius:6px;border:1px solid #e6b;box-shadow:0 0 6px #ccc;cursor:pointer;" onclick="showImageModal(${books.indexOf(b)})">` : ""}
-                </div>
-                <div style="margin:5px 0 0 0;font-size:15px;">
-                  ${b.id} – ${b.title}
-                  <span class="neu-badge">Neu!</span>
-                </div>
-              </div>
-            `).join("")}
-          </div>
-        </div>
-      `;
-    }
-
-    // ... alle weiteren Funktionen wie gehabt, z.B. renderBooks, Admin, QR-Scan, etc. ...
-
-    // Beispiel: Beim Hinzufügen immer description mitgeben!
-    function addBook() {
-      const id = document.getElementById("new-id").value.trim();
-      const title = document.getElementById("new-title").value.trim();
-      const cat = document.getElementById("new-cat").value.trim();
-      const keys = document.getElementById("new-keywords").value.trim();
-      const age = document.getElementById("new-age").value.trim();
-      if (!id || !title) return alert("Bitte ID und Titel angeben");
-      books.push({id, title, category: cat, keywords: keys, age, status: "verfügbar", group: "", img:"", borrower: "", borrowDate: "", isNew:false, newSince:"", description:""});
-      log.push(`${new Date().toLocaleString()}: ${id} hinzugefügt`);
-      saveData();
-      currentPage = 1;
-      renderBooks(document.getElementById("search").value);
-      renderNewBooks();
-      updateLog();
-      document.getElementById("new-id").value = "";
-      document.getElementById("new-title").value = "";
-      document.getElementById("new-cat").value = "";
-      document.getElementById("new-keywords").value = "";
-      document.getElementById("new-age").value = "";
-    }
-
-    // ... Stelle sicher, dass renderNewBooks() nach jedem renderBooks() aufgerufen wird!
-    // z.B. nach jeder Änderung:
-    document.getElementById("search").addEventListener("input", function(e) {
-      currentPage = 1;
-      renderBooks(e.target.value);
-      renderNewBooks();
-    });
-
-    // ... Initiales Rendering ...
-    renderBooks();
-    renderNewBooks();
-
-  </script>
-</body>
-</html>
+    function renderBooks() {
+      const list = document.getElementById("book-list");
+      list.innerHTML = "";
+      books.forEach((book, index) => {
+        let neuHtml = "";
+        const now = Date.now();
+        if (book.isNew && book.newSince && (now - new Date(book.newSince).getTime
