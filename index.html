@@ -4,75 +4,334 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kindergarten-Bibliothek</title>
+  <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/5/57/Book_icon_2.png">
   <style>
-    body { font-family: sans-serif; background: #f6f6ff; margin:0; padding:25px;}
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .search-container { display: flex; align-items: center; gap: 8px; flex: 1; max-width: 450px; }
-    #search { flex: 1; font-size: 1em; padding: 8px; border: 2px solid #ddd; border-radius: 6px; }
-    .clear-search-button, .show-all-button, .admin-corner button, button { font-size: 1em; padding: 6px 12px; border-radius: 6px; cursor: pointer; margin: 2px;}
-    .admin-corner { display: flex; flex-direction: column; gap: 5px; }
-    .book { background: #fff; margin: 10px 0; padding: 12px; border-radius: 7px; box-shadow: 0 0 6px #ccc; min-height: 115px; display: flex; align-items: flex-start; }
-    .cover { max-width: 70px; max-height: 100px; margin-right: 12px; margin-bottom: 6px; border: 1px solid #eee; border-radius: 3px;}
-    .book-details { flex:1; }
-    .neu-badge { color: #e88; background: #fff4ee; border-radius: 6px; font-weight: bold; font-size: 13px; margin-left: 8px; padding: 1px 6px; border: 1px solid #e6b; vertical-align: middle; }
-    #modal { display: none; position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 10;}
-    #modal-content { background: #fff; padding: 30px; border-radius: 10px; min-width: 320px; max-width: 90vw; max-height: 90vh; overflow: auto; }
-    #admin-login {margin-top:10px;}
-    #admin-login.hidden, #admin-panel.hidden { display: none; }
-    #book-list {margin-top:20px;}
-    #new-books {margin-top:0; margin-bottom:10px;}
+    :root {
+      --accent: #007aff;
+      --accent-light: #eaf3ff;
+      --accent-gradient: linear-gradient(90deg, #8ecaff 0%, #007aff 100%);
+      --border: #e8e8ea;
+      --shadow: 0 3px 18px rgba(60,60,80,.08), 0 1.5px 4px rgba(60,60,80,.05);
+      --modal-shadow: 0 12px 36px rgba(0,20,80,.18);
+      --radius: 16px;
+      --radius-sm: 8px;
+      --badge-bg: #fff4ee;
+      --badge-border: #e6b;
+      --badge-color: #e88;
+      --new-bg: #fffbe8;
+      --new-border: #ffe5b3;
+      --input-bg: #f9faff;
+      --input-border: #d8d8da;
+      --input-shadow: 0 1.5px 8px rgba(60,60,80,.06);
+    }
+    body {
+      font-family: 'SF Pro Display', 'Segoe UI', 'Arial', sans-serif;
+      background: var(--input-bg);
+      margin: 0; padding: 0;
+      min-height: 100vh;
+      color: #222;
+    }
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 36px 18px 80px 18px;
+    }
+    .header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 32px;
+    }
+    h1 {
+      font-size: 2.06em;
+      font-weight: 700;
+      margin: 0 0 10px 0;
+      letter-spacing: -0.02em;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .search-container {
+      display: flex; align-items: center; gap: 10px; flex: 1; max-width: 480px;
+      margin-bottom: 7px;
+    }
+    #search {
+      flex: 1;
+      font-size: 1.04em;
+      padding: 9px 12px;
+      border: 1.8px solid var(--input-border);
+      border-radius: var(--radius-sm);
+      background: var(--input-bg);
+      box-shadow: var(--input-shadow);
+      transition: border-color .17s, box-shadow .17s;
+    }
+    #search:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px #b6d8ff;
+      outline: none;
+    }
+    .qr-button, .clear-search-button, .show-all-button {
+      border: none;
+      border-radius: var(--radius-sm);
+      background: #fff;
+      color: var(--accent);
+      font-size: 1.17em;
+      padding: 8px 10px;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: background .15s, box-shadow .15s, color .15s;
+    }
+    .qr-button:hover, .clear-search-button:hover, .show-all-button:hover {
+      background: var(--accent-light);
+      color: #0050a8;
+      box-shadow: 0 5px 24px rgba(0,122,255,.08);
+    }
+    .show-all-button {
+      font-size: 0.97em;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      background: var(--accent-gradient);
+      color: #fff;
+      padding: 8px 18px;
+      box-shadow: var(--shadow);
+    }
+    .show-all-button:hover {
+      background: linear-gradient(90deg, #b6d8ff 0%, #007aff 100%);
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(0,122,255,.07);
+    }
+    .admin-corner {
+      display: flex; flex-direction: column; gap: 6px;
+      align-items: flex-end;
+    }
+    .admin-corner button {
+      background: #fff; color: var(--accent); font-weight: 600;
+      border: 1.5px solid var(--accent-light);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow);
+      padding: 8px 18px;
+      cursor: pointer;
+      font-size: 1.01em;
+      transition: background .15s, color .15s, box-shadow .15s;
+    }
+    .admin-corner button:hover {
+      background: var(--accent-gradient);
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(0,122,255,.07);
+    }
+    #admin-login.hidden, #admin-panel.hidden { display: none;}
+    #admin-login, #admin-panel {
+      margin-top: 10px;
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 22px 14px 22px;
+      border: 1.5px solid var(--accent-light);
+      min-width: 245px;
+      max-width: 340px;
+      animation: fadeIn .4s;
+    }
+    #admin-login input { margin-bottom: 8px; }
+    #admin-panel input, #admin-panel select {
+      margin: 6px 0;
+      padding: 8px;
+      border: 1.5px solid var(--input-border);
+      border-radius: var(--radius-sm);
+      background: var(--input-bg);
+      font-size: 1em;
+      box-shadow: var(--input-shadow);
+      width: 96%;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    #admin-panel input:focus, #admin-panel select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px #b6d8ff;
+      outline: none;
+    }
+    #admin-panel button { margin-top: 7px; }
+    #log-output {
+      white-space: pre; font-size: 0.95em;
+      background: #f8fafc;
+      padding: 10px; border-radius: var(--radius-sm);
+      max-height:150px; overflow-y:auto;
+      border: 1.2px solid #e6e8fa;
+      margin-bottom: 8px;
+      color: #555;
+      box-shadow: var(--shadow);
+    }
+    #book-list {margin-top:24px;}
+    #new-books {margin-top:0; margin-bottom:18px;}
+    .new-books-box {
+      background: var(--new-bg);
+      border-radius: var(--radius);
+      border: 1.5px solid var(--new-border);
+      box-shadow: 0 4px 20px rgba(255,200,90,.08);
+      padding: 16px 18px;
+      margin-bottom: 18px;
+      animation: fadeIn .6s;
+    }
+    .new-books-title {
+      font-weight: 700; color: #b67b00; font-size: 1.17em; margin-bottom: 6px;
+      letter-spacing: 0.01em;
+    }
+    .new-books-flex {
+      display: flex; flex-wrap: wrap; gap: 26px; margin-top: 10px;
+    }
+    .new-book-item {
+      width: 140px; text-align: center;
+      border-radius: var(--radius-sm);
+      box-shadow: 0 1.5px 12px rgba(230,180,0,.06);
+      background: #fff;
+      padding: 10px 7px 9px 7px;
+      transition: box-shadow .19s;
+    }
+    .new-book-item:hover {
+      box-shadow: 0 4px 20px rgba(255,200,90,.14);
+      background: #fffbe8;
+    }
+    .new-book-img {
+      width: 70px; height: 100px; object-fit: cover; border-radius: 10px;
+      border: 1.5px solid var(--badge-border);
+      box-shadow: 0 4px 14px rgba(180,90,60,.14);
+      cursor: pointer;
+      transition: box-shadow .17s, border-color .15s;
+    }
+    .new-book-img:hover {
+      box-shadow: 0 7px 28px rgba(180,90,60,.18);
+      border-color: #fa0;
+    }
+    .new-book-title {
+      margin: 7px 0 0 0; font-size: 1em; font-weight: 500; color: #ae7a00;
+      letter-spacing: 0.02em;
+    }
+    .neu-badge {
+      color: var(--badge-color); background: var(--badge-bg);
+      border-radius: 8px; font-weight: 700; font-size: 13px; margin-left: 7px; padding: 2px 7px; border: 1px solid var(--badge-border); vertical-align: middle; letter-spacing: 0.02em;
+    }
+    .book {
+      background: #fff; margin: 13px 0; padding: 18px; border-radius: var(--radius); box-shadow: var(--shadow); min-height: 115px; display: flex; align-items: flex-start; transition: box-shadow .17s, border-color .15s;
+      border: 1.2px solid var(--border);
+    }
+    .book:hover {
+      box-shadow: 0 8px 36px rgba(0,122,255,.09);
+      border-color: var(--accent-light);
+    }
+    .cover {
+      max-width: 72px; max-height: 104px; margin-right: 16px; margin-bottom: 7px;
+      border-radius: 10px; border: 1.5px solid var(--input-border);
+      box-shadow: 0 3px 18px rgba(60,60,80,.10);
+      cursor: pointer;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .cover:hover {
+      border-color: var(--accent);
+      box-shadow: 0 8px 24px rgba(0,122,255,.10);
+    }
+    .book-details {
+      flex:1; font-size: 1em;
+    }
+    .book-details strong { font-size: 1.08em; color: #222; }
+    .book-details button {
+      margin-top: 9px;
+      background: var(--accent-gradient); color: #fff;
+      border: none; border-radius: var(--radius-sm); box-shadow: var(--shadow);
+      font-size: 0.98em; font-weight: 600; letter-spacing: 0.01em; padding: 6px 22px;
+      cursor: pointer;
+      transition: background .15s, box-shadow .15s;
+    }
+    .book-details button:hover {
+      background: linear-gradient(90deg, #b6d8ff 0%, #007aff 100%);
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(0,122,255,.09);
+    }
+    /* Modal */
+    #modal, #qr-modal {
+      display: none; position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.27); align-items: center; justify-content: center; z-index: 10;
+      animation: fadeInBg .38s;
+    }
+    #modal-content, #qr-modal-content {
+      background: #fff; padding: 32px 24px; border-radius: var(--radius);
+      min-width: 320px; max-width: 98vw; max-height: 94vh; overflow: auto;
+      box-shadow: var(--modal-shadow);
+      animation: fadeIn .38s;
+    }
+    #qr-video { width: 320px; height: 240px; border-radius: 12px; background: #222; margin-bottom: 11px; }
+    #qr-modal-content button { margin-top: 10px; }
+    /* Animations */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(16px);} to { opacity: 1; transform: none; } }
+    @keyframes fadeInBg { from { opacity: 0; } to { opacity: 1; } }
+    @media (max-width: 840px) { .container { max-width: 100vw; } }
     @media (max-width: 768px) {
-      body { padding: 15px; }
+      .container { padding: 16px 2vw 60px 2vw; }
       .header { flex-direction: column; gap: 15px; align-items: stretch; }
       .search-container { max-width: 100%; }
       .admin-corner { flex-direction: row; justify-content: center; }
       #new-books {font-size: 15px;}
       .book { flex-direction: column; }
       .cover { margin-bottom: 10px; }
+      .new-books-flex { gap: 12px;}
+      .new-book-item { width: 48vw; min-width: 120px;}
     }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div>
-      <h1>📚 Kindergarten-Bibliothek</h1>
-      <div class="search-container">
-        <input type="text" id="search" placeholder="Suchen ..." autocomplete="off">
-        <button class="clear-search-button" onclick="clearSearch()" title="Suchfeld leeren">✖️</button>
-        <button class="show-all-button" onclick="showAllBooks()" title="Alle anzeigen">Alle anzeigen</button>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1>📚 Kindergarten-Bibliothek</h1>
+        <div class="search-container">
+          <input type="text" id="search" placeholder="Suchen ..." autocomplete="off">
+          <button class="qr-button" onclick="showQRModal()" title="QR-Code scannen">📷</button>
+          <button class="clear-search-button" onclick="clearSearch()" title="Suchfeld leeren">✖️</button>
+          <button class="show-all-button" onclick="showAllBooks()" title="Alle anzeigen">Alle anzeigen</button>
+        </div>
+        <div id="new-books"></div>
       </div>
-      <div id="new-books"></div>
+      <div class="admin-corner">
+        <button onclick="showAdminLogin()">🔑 Admin</button>
+        <div id="admin-login" class="hidden">
+          <input type="password" id="admin-pw" placeholder="Passwort" style="width: 120px;">
+          <button onclick="checkAdmin()">Login</button>
+        </div>
+      </div>
     </div>
-    <div class="admin-corner">
-      <button onclick="showAdminLogin()">🔑 Admin</button>
-      <div id="admin-login" class="hidden">
-        <input type="password" id="admin-pw" placeholder="Passwort" style="width: 120px;">
-        <button onclick="checkAdmin()">Login</button>
-      </div>
+    <div id="book-list"></div>
+    <div id="modal"><div id="modal-content"></div></div>
+    <div id="qr-modal"><div id="qr-modal-content"></div></div>
+
+    <div id="admin-panel" class="hidden">
+      <h3>Buch hinzufügen</h3>
+      <input id="new-id" placeholder="ID (z.B. B-0003)">
+      <input id="new-title" placeholder="Titel">
+      <input id="new-cat" placeholder="Kategorie">
+      <input id="new-keywords" placeholder="Schlagworte">
+      <input id="new-age" placeholder="Alter (z.B. 3-6)">
+      <input id="new-img" placeholder="Bild-URL (optional)">
+      <select id="new-group" class="group-select">
+        <option value="">Gruppe (optional)</option>
+        <option value="Sterne">Sterne</option>
+        <option value="Sonne">Sonne</option>
+        <option value="Mond">Mond</option>
+        <option value="Regenbogen">Regenbogen</option>
+        <option value="Regentropfen">Regentropfen</option>
+        <option value="Schneeflocken">Schneeflocken</option>
+        <option value="Sprachförderung">Sprachförderung</option>
+      </select>
+      <button onclick="addBook()">➕ Hinzufügen</button>
+      <button onclick="exportData()">📁 Backup erstellen</button>
+      <input type="file" id="import-file" accept=".json" onchange="importData(event)">
+      <button onclick="document.getElementById('import-file').click()">📂 Backup laden</button>
+      <button onclick="logoutAdmin()">Logout</button>
+      <h3>Ausleihverlauf</h3>
+      <div id="log-output"></div>
+      <button onclick="resetData()">Alles zurücksetzen</button>
     </div>
   </div>
-  <div id="book-list"></div>
-
-  <div id="modal"><div id="modal-content"></div></div>
-
-  <div id="admin-panel" class="hidden">
-    <h3>Buch hinzufügen</h3>
-    <input id="new-id" placeholder="ID (z.B. B-0003)">
-    <input id="new-title" placeholder="Titel">
-    <input id="new-cat" placeholder="Kategorie">
-    <input id="new-keywords" placeholder="Schlagworte">
-    <input id="new-age" placeholder="Alter (z.B. 3-6)">
-    <input id="new-img" placeholder="Bild-URL (optional)">
-    <button onclick="addBook()">➕ Hinzufügen</button>
-    <button onclick="logoutAdmin()">Logout</button>
-  </div>
-
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <script>
-    // Demo-Bücher, du kannst mit Admin neue hinzufügen!
     let books = [
-      {id:"B-001", title:"Märchenwald", category:"Bilderbuch", keywords:"Wald, Tiere", status:"verfügbar", age:"3-6", group:"", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/The_Great_Gatsby_cover_1925_%281%29.jpg/200px-The_Great_Gatsby_cover_1925_%281%29.jpg", borrower:"", borrowDate:"", isNew:true, newSince:new Date(Date.now()-5*24*60*60*1000).toISOString(), description:"Ein Buch über den Wald."},
-      {id:"B-002", title:"Ritter und Drachen", category:"Sachbuch", keywords:"Ritter, Drachen", status:"verfügbar", age:"5-8", group:"", img:"", borrower:"", borrowDate:"", isNew:false, newSince:"", description:""}
+      {id:"B-001", title:"Märchenwald", category:"Bilderbuch", keywords:"Wald, Tiere", status:"verfügbar", age:"3-6", group:"Sterne", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/The_Great_Gatsby_cover_1925_%281%29.jpg/200px-The_Great_Gatsby_cover_1925_%281%29.jpg", borrower:"", borrowDate:"", isNew:true, newSince:new Date(Date.now()-5*24*60*60*1000).toISOString(), description:"Ein Buch über den Wald."},
+      {id:"B-002", title:"Ritter und Drachen", category:"Sachbuch", keywords:"Ritter, Drachen", status:"verfügbar", age:"5-8", group:"Sonne", img:"", borrower:"", borrowDate:"", isNew:false, newSince:"", description:""}
     ];
+    let log = [];
     let adminMode = false;
 
     function renderBooks(filter = "") {
@@ -95,7 +354,10 @@
               Kategorie: ${book.category}<br>
               Schlagworte: ${book.keywords}<br>
               Alter: ${book.age}<br>
+              Gruppe: ${book.group || ""}<br>
               Status: ${book.status}<br>
+              Ausleiher: ${book.borrower || ""}<br>
+              Ausleihdatum: ${book.borrowDate || ""}<br>
               <button onclick="showImageModal(${idx})">Bild/Beschreibung</button>
             </div>
           </div>`;
@@ -103,7 +365,6 @@
       document.getElementById("book-list").innerHTML = html || "<p>Keine Bücher gefunden.</p>";
     }
 
-    // *** NEUE BÜCHER ANZEIGE WIE IN DER DEMO ***
     function renderNewBooks() {
       const container = document.getElementById("new-books");
       const now = Date.now();
@@ -124,15 +385,15 @@
         return;
       }
       container.innerHTML = `
-        <div style="background:#fffbcc;border-radius:8px;padding:10px;margin-bottom:12px;">
-          <strong>✨ Neue Bücher:</strong>
-          <div style="display:flex;flex-wrap:wrap;gap:18px;margin-top:10px;">
+        <div class="new-books-box">
+          <div class="new-books-title">✨ Neue Bücher:</div>
+          <div class="new-books-flex">
             ${newBooks.map(b => `
-              <div style="width:140px;text-align:center;">
+              <div class="new-book-item">
                 <div>
-                  ${b.img ? `<img src="${b.img}" style="width:70px;height:100px;object-fit:cover;border-radius:6px; border:1px solid #e6b;cursor:pointer;" onclick="showImageModal(${books.indexOf(b)})">` : ""}
+                  ${b.img ? `<img src="${b.img}" class="new-book-img" onclick="showImageModal(${books.indexOf(b)})">` : ""}
                 </div>
-                <div style="margin:5px 0 0 0;font-size:15px;">
+                <div class="new-book-title">
                   ${b.id} – ${b.title}
                   <span class="neu-badge">Neu!</span>
                 </div>
@@ -151,13 +412,13 @@
       }
       if (adminMode) {
         modalHtml += `
-          <textarea id="book-desc" style="width:90%;height:80px;padding:8px;border-radius:7px;" placeholder="Beschreibung eingeben...">${book.description || ''}</textarea><br>
-          <button onclick="saveDescription(${index})">💾 Beschreibung speichern</button>
+          <textarea id="book-desc" style="width:90%;height:80px;padding:8px;border-radius:7px;border:1.5px solid #ddd;" placeholder="Beschreibung eingeben...">${book.description || ''}</textarea><br>
+          <button onclick="saveDescription(${index})" style="margin-top:8px;">💾 Beschreibung speichern</button>
         `;
       } else if (book.description) {
         modalHtml += `<div style="margin-top:10px;color:#333;background:#f9f9ef;padding:12px;border-radius:7px;">${book.description}</div>`;
       }
-      modalHtml += `<br><button onclick="closeModal()">Schließen</button></div>`;
+      modalHtml += `<br><button onclick="closeModal()" style="margin-top:10px;">Schließen</button></div>`;
       document.getElementById("modal-content").innerHTML = modalHtml;
       document.getElementById("modal").style.display = "flex";
     }
@@ -166,11 +427,13 @@
       closeModal();
       renderBooks(document.getElementById("search").value);
       renderNewBooks();
+      saveData();
     }
     function closeModal() {
       document.getElementById("modal").style.display = "none";
     }
 
+    // Admin-Login/Panel
     function showAdminLogin() {
       document.getElementById("admin-login").classList.remove("hidden");
       document.getElementById("admin-panel").classList.add("hidden");
@@ -184,6 +447,7 @@
         document.getElementById("admin-panel").classList.remove("hidden");
         renderBooks(document.getElementById("search").value);
         renderNewBooks();
+        updateLog();
       } else {
         alert("❌ Falsches Passwort");
         document.getElementById("admin-pw").value = "";
@@ -203,19 +467,24 @@
       const keys = document.getElementById("new-keywords").value.trim();
       const age = document.getElementById("new-age").value.trim();
       const img = document.getElementById("new-img").value.trim();
+      const group = document.getElementById("new-group").value;
       if (!id || !title) return alert("Bitte ID und Titel angeben");
       books.push({
-        id, title, category: cat, keywords: keys, age, status: "verfügbar", group: "",
+        id, title, category: cat, keywords: keys, age, status: "verfügbar", group,
         img, borrower: "", borrowDate: "", isNew:true, newSince:new Date().toISOString(), description:""
       });
+      log.push(`${new Date().toLocaleString()}: ${id} hinzugefügt`);
       renderBooks(document.getElementById("search").value);
       renderNewBooks();
+      updateLog();
+      saveData();
       document.getElementById("new-id").value = "";
       document.getElementById("new-title").value = "";
       document.getElementById("new-cat").value = "";
       document.getElementById("new-keywords").value = "";
       document.getElementById("new-age").value = "";
       document.getElementById("new-img").value = "";
+      document.getElementById("new-group").value = "";
     }
     function clearSearch() {
       document.getElementById("search").value = "";
@@ -231,9 +500,135 @@
       renderBooks(e.target.value);
       renderNewBooks();
     });
-    // Initiales Rendering
+
+    // Backup/Restore/Reset/Log
+    function exportData() {
+      const dataStr = JSON.stringify({books, log});
+      const blob = new Blob([dataStr], {type: "application/json"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "bibliothek-backup.json";
+      a.click();
+    }
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (Array.isArray(data.books)) books = data.books;
+          if (Array.isArray(data.log)) log = data.log;
+          renderBooks();
+          renderNewBooks();
+          updateLog();
+          saveData();
+        } catch(err) {
+          alert("Fehler beim Import!");
+        }
+      };
+      reader.readAsText(file);
+    }
+    function resetData() {
+      if (!confirm("Wirklich ALLES löschen?")) return;
+      books = [];
+      log = [];
+      renderBooks();
+      renderNewBooks();
+      updateLog();
+      saveData();
+    }
+    function updateLog() {
+      document.getElementById("log-output").textContent = log.join("\n");
+    }
+
+    // Daten speichern (localStorage)
+    function saveData() {
+      localStorage.setItem("kita-books", JSON.stringify(books));
+      localStorage.setItem("kita-log", JSON.stringify(log));
+    }
+    function loadData() {
+      try {
+        const b = JSON.parse(localStorage.getItem("kita-books"));
+        if (Array.isArray(b)) books = b;
+        const l = JSON.parse(localStorage.getItem("kita-log"));
+        if (Array.isArray(l)) log = l;
+      } catch(e) {}
+    }
+
+    // QR-Code Scanner
+    let qrStream = null;
+    let qrActive = false;
+    function showQRModal() {
+      document.getElementById("qr-modal").style.display = "flex";
+      document.getElementById("qr-modal-content").innerHTML = `
+        <div style="text-align:center;">
+          <video id="qr-video" autoplay></video><br>
+          <canvas id="qr-canvas" style="display:none;"></canvas>
+          <div id="qr-status" style="margin:10px;color:#444;">QR-Code zeigen ...</div>
+          <button onclick="closeQRModal()" style="margin-top:8px;">Abbrechen</button>
+        </div>
+      `;
+      startQRScanner();
+    }
+    function closeQRModal() {
+      document.getElementById("qr-modal").style.display = "none";
+      stopQRScanner();
+    }
+    function startQRScanner() {
+      qrActive = true;
+      const video = document.getElementById("qr-video");
+      const canvas = document.getElementById("qr-canvas");
+      const statusDiv = document.getElementById("qr-status");
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        statusDiv.textContent = "Keine Kamera verfügbar!";
+        return;
+      }
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(stream => {
+        qrStream = stream;
+        video.srcObject = stream;
+        video.setAttribute("playsinline", true);
+        video.play();
+        const scan = () => {
+          if (!qrActive) return;
+          if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, canvas.width, canvas.height);
+            if (code) {
+              statusDiv.textContent = `Gefunden: ${code.data}`;
+              document.getElementById("search").value = code.data;
+              renderBooks(code.data);
+              renderNewBooks();
+              setTimeout(closeQRModal, 1200);
+              return;
+            }
+          }
+          setTimeout(scan, 300);
+        };
+        scan();
+      }).catch(() => {
+        statusDiv.textContent = "Kamera-Zugriff verweigert!";
+      });
+    }
+    function stopQRScanner() {
+      qrActive = false;
+      try {
+        if (qrStream) {
+          qrStream.getTracks().forEach(track => track.stop());
+        }
+      } catch(e) {}
+      qrStream = null;
+    }
+
+    // Initiales Laden/Rendering
+    loadData();
     renderBooks();
     renderNewBooks();
+    updateLog();
   </script>
 </body>
 </html>
