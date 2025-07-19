@@ -748,6 +748,10 @@ function renderBooks(searchVal="") {
     renderBooks();
     renderNewBooks();
     updateLog();
+        // Sicherstellen, dass Verliehen-Übersicht initial versteckt ist (für Nicht-Admins)
+if (!admin) {
+  document.getElementById("verliehen-uebersicht").classList.add("hidden");
+}
   </script>
 </body>
 </html>    
