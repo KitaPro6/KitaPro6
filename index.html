@@ -3,12 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kita-Bibliothek</title>
+  <title>Kindergarten-Bibliothek</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#007bff">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Kita-Bibliothek">
+  <meta name="apple-mobile-web-app-title" content="Kindergarten-Bibliothek">
+  <!-- jsQR lokal eingebunden für Offline-Funktion -->
+  <script src="jsQR.js"></script>
   <style>
     body { font-family: sans-serif; padding: 25px; background: #f6f6ff; margin: 0; }
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
@@ -48,7 +50,7 @@
 <body>
   <div class="header">
     <div>
-      <h1>📚 Kita-Bibliothek</h1>
+      <h1>📚 Kindergarten-Bibliothek</h1>
       <div class="search-container">
         <input type="text" id="search" placeholder="Suchen nach Titel, ID, Kategorie, Schlagwort ..." autocomplete="off">
         <button class="qr-button" onclick="startQRScanner()" title="QR-Code scannen">📷</button>
@@ -100,7 +102,7 @@
 
     // --- IndexedDB Setup ---
     let db;
-    const dbName = 'KitaBibliothek';
+    const dbName = 'KindergartenBibliothek';
     const dbVersion = 1;
 
     // IndexedDB initialisieren
@@ -246,9 +248,10 @@
       {name:"Sprachförderung", symbol:"🗣️"}
     ];
 
-    // QR-Code Scanner (vereinfachte Version)
+    // QR-Code Scanner mit jsQR (Offline-fähig)
     let stream;
     let qrScannerActive = false;
+    let qrScanInterval;
 
     function startQRScanner() {
       const modal = document.getElementById("modal");
@@ -258,6 +261,7 @@
         <h3>QR-Code Scanner</h3>
         <div style="text-align: center;">
           <video id="qr-video" width="300" height="300" style="border: 2px solid #ddd; border-radius: 8px;" autoplay></video>
+          <canvas id="qr-canvas" width="300" height="300" style="display:none;"></canvas>
           <br><br>
           <input type="text" id="manual-input" placeholder="Oder manuell eingeben (z.B. B-0002)" style="width: 200px; padding: 8px; margin: 10px;">
           <br>
@@ -271,7 +275,7 @@
       
       modal.style.display = "flex";
       
-      // Kamerazugriff versuchen
+      // Kamerazugriff und jsQR Scan
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         qrScannerActive = true;
         
@@ -285,17 +289,12 @@
         .then(function(mediaStream) {
           stream = mediaStream;
           const video = document.getElementById("qr-video");
-          if (video) {
-            video.srcObject = stream;
-            video.play();
-            
-            // Hinweis für manuellen Scan anzeigen
-            setTimeout(() => {
-              if (qrScannerActive) {
-                alert("QR-Code Scanner aktiv! Da keine automatische Dekodierung verfügbar ist, geben Sie bitte die Buchnummer manuell ein oder verwenden Sie eine QR-Scanner-App.");
-              }
-            }, 2000);
-          }
+          video.srcObject = stream;
+          video.play();
+
+          qrScanInterval = setInterval(() => {
+            scanQRCode(video);
+          }, 500);
         })
         .catch(function(err) {
           console.error("Kamera konnte nicht geöffnet werden:", err);
@@ -308,6 +307,37 @@
       }
     }
 
+    function scanQRCode(video) {
+      if (!qrScannerActive) return;
+      const canvas = document.getElementById("qr-canvas");
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, canvas.width, canvas.height);
+      if (code) {
+        qrScannerActive = false;
+        clearInterval(qrScanInterval);
+        stopQRScanner();
+        document.getElementById("search").value = code.data;
+        renderBooks(code.data);
+        // Buch gefunden Benachrichtigung
+        const foundBooks = books.filter(book => 
+          book.id.toLowerCase().includes(code.data.toLowerCase()) ||
+          book.title.toLowerCase().includes(code.data.toLowerCase())
+        );
+        
+        if (foundBooks.length > 0) {
+          if (foundBooks.length === 1) {
+            alert(`Buch gefunden: ${foundBooks[0].id} - ${foundBooks[0].title}`);
+          } else {
+            alert(`${foundBooks.length} Bücher gefunden`);
+          }
+        } else {
+          alert(`Kein Buch mit "${code.data}" gefunden.`);
+        }
+      }
+    }
+
     function searchManualInput() {
       const searchTerm = document.getElementById("manual-input").value.trim();
       if (searchTerm) {
@@ -315,7 +345,6 @@
         renderBooks(searchTerm);
         stopQRScanner();
         
-        // Falls Buch gefunden, Benachrichtigung anzeigen
         const foundBooks = books.filter(book => 
           book.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
           book.title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -335,6 +364,7 @@
 
     function stopQRScanner() {
       qrScannerActive = false;
+      clearInterval(qrScanInterval);
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
         stream = null;
