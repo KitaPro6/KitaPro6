@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kindergarten-Bibliothek</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f9faff; margin: 0;}
+    .container { max-width: 900px; margin: 0 auto; padding: 24px;}
+    .header { display: flex; justify-content: space-between; align-items: flex-start;}
+    h1 { 
+      margin: 0 0 10px 0; 
+      font-size: 2em; 
+      color: #007aff;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-shadow: none;
+      background: none;
+    }
+    .search-container { display: flex; gap: 8px; align-items: center;}
+    #search { padding: 8px; font-size: 1em; border-radius: 7px; border: 1.5px solid #b6d8ff;}
+    .qr-button, .clear-search-button { background: #fff; color: #007aff; border: none; border-radius: 7px; font-size: 1.1em; padding: 8px; cursor: pointer;}
+    .qr-button:hover, .clear-search-button:hover { background: #eaf3ff;}
+    .pagination { margin: 24px 0; text-align: center;}
+    .pagination button { margin:2px; padding:7px 14px; border-radius:7px; border:1px solid #b6d8ff; background:#fff; color:#007aff; cursor:pointer;}
+    .pagination button.active { background:#007aff; color:#fff; font-weight: bold;}
+    .book { display: flex; gap:22px; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px #eee; margin-bottom: 18px; padding: 12px;}
+    .book img.cover { max-width: 90px; border-radius: 8px; }
+    .book-details { flex: 1;}
+    .status-verfuegbar { font-weight: bold; color: #228B22; }
+    .status-verfuegbar .symbol { color: #228B22; font-size: 1.2em; vertical-align: middle;}
+    .status-geliehen { font-weight: bold; color: #CC2222; }
+    .status-geliehen .symbol { color: #CC2222; font-size: 1.2em; vertical-align: middle;}
+    .group-btn { margin: 7px; font-size:2em; background:none; border:none; cursor:pointer;}
+    .group-btn:focus { outline: 2px solid #007aff;}
+    .edit-btn { background: #ffe5b3; color: #9a6a00; border:1px solid #e6b; border-radius:7px; padding:6px 10px;}
+    .edit-btn:hover { background:#fffbe8;}
+    .save-btn { background:#007aff; color:#fff; border:none; border-radius:7px; padding:6px 14px;}
+    .save-btn:hover { background:#0050a8;}
+    #modal, #qr-modal {position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.23); display:none; align-items:center; justify-content:center; z-index:10;}
+    #modal-content, #qr-modal-content { background:#fff; border-radius:16px; min-width:280px; max-width:350px; padding:24px; box-shadow:0 8px 36px #007aff22;}
+    #admin-login, #admin-panel { background:#fff; border-radius:12px; box-shadow: 0 3px 14px #007aff17; padding:18px; margin-bottom:16px;}
+    #admin-login.hidden, #admin-panel.hidden { display: none;}
+    #admin-panel input, #admin-panel textarea, #admin-panel select { margin:4px 0 8px 0; padding:7px; width:95%; border-radius:7px; border:1.2px solid #b6d8ff;}
+    #admin-panel textarea { min-height: 60px;}
+    #log-output { font-size:0.95em; background:#f8fafc; padding:10px; border-radius:8px; margin-bottom:8px; max-height:120px; overflow-y:auto; border:1px solid #e6e8fa;}
+    #backup-section {margin-top:32px; margin-bottom:24px; background:#fff; border-radius:14px; box-shadow:0 2px 12px #007aff16; padding:18px;}
+    #backup-section.hidden {display: none;}
+    .backup-btn {margin:4px; padding:8px 16px; border-radius:8px; border:1px solid #b6d8ff; background:#eaf3ff; color:#007aff; cursor:pointer;}
+    .backup-btn:hover {background:#b6d8ff;}
+    .camera-btn {margin-left:8px; background:#eaf3ff; color:#007aff; border:none; border-radius:7px; padding:6px 12px;}
+    .camera-btn:hover {background:#b6d8ff;}
+    .img-preview {max-width:110px; border-radius:8px; margin-bottom:8px;}
+    .neu-label {display:flex; align-items:center; gap:8px; font-weight:bold;}
+    .neu-label input[type=checkbox] {margin-right:6px;}
+    .neu-label span {font-weight:bold;}
+    #new-books {
+      max-width: 400px;
+      width: 100%;
+      margin: 0 auto 12px auto;
+      overflow-x: auto;
+    }
+    #new-books-scroll {
+      display: flex;
+      gap: 14px;
+      padding-bottom: 8px;
+    }
+    #new-books-scroll .book {
+      min-width: 180px;
+      max-width: 200px;
+      flex: 0 0 auto;
+    }
+    /* Vollbildkamera Overlay */
+    #camera-overlay {
+      position: fixed;
+      z-index: 9999;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #000b;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    #camera-video-full {
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      background: #222;
+    }
+    #camera-shutter-btn {
+      position: absolute;
+      left: 50%; bottom: 7vh;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.6);
+      border: none;
+      border-radius: 50%;
+      width: 80px; height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.6em;
+      color: #007aff;
+      box-shadow: 0 4px 24px #0005;
+      cursor: pointer;
+    }
+    #camera-close-btn {
+      position: absolute;
+      top: 28px; right: 28px;
+      background: rgba(0,0,0,0.25);
+      color: #fff;
+      border: none;
+      border-radius: 100px;
+      font-size: 2em;
+      width: 48px; height: 48px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+    }
+    /* Admin-Action Modal */
+    #admin-action-modal {
+      display:none; position:fixed;top:0;left:0;right:0;bottom:0;
+      background:rgba(0,0,0,.23);align-items:center;justify-content:center;z-index:99999;
+    }
+    #admin-action-modal-inner {
+      background:#fff;padding:28px 22px;border-radius:16px;box-shadow:0 8px 36px #007aff22;min-width:240px;max-width:340px;text-align:center;
+    }
+    /* Verliehen Übersicht Tabs */
+    #verliehen-uebersicht {background:#fff; border-radius:12px; box-shadow:0 2px 12px #007aff16; padding:16px; margin-bottom:18px;}
+    #gruppen-tabs button {margin:2px 6px 9px 0; padding:6px 16px; border-radius:7px; border:1px solid #b6d8ff; background:#eaf3ff; color:#007aff; cursor:pointer;}
+    #gruppen-tabs button.active {background:#007aff; color:#fff;}
+    #gruppen-content ul {margin:0 0 0 16px;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- ... (restlicher HTML-Inhalt wie in deinem Repo) ... -->
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <script>
+    // ... (vollständiger JavaScript-Code wie in deinem Repo) ...
+  </script>
+</body>
+</html>
