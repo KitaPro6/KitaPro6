@@ -17,10 +17,40 @@
       text-shadow: none;
       background: none;
     }
-    .search-container { display: flex; gap: 8px; align-items: center;}
-    #search { padding: 8px; font-size: 1em; border-radius: 7px; border: 1.5px solid #b6d8ff;}
-    .qr-button, .clear-search-button { background: #fff; color: #007aff; border: none; border-radius: 7px; font-size: 1.1em; padding: 8px; cursor: pointer;}
-    .qr-button:hover, .clear-search-button:hover { background: #eaf3ff;}
+    /* Angepasste Suchleiste */
+    .search-wrapper {
+      display: flex;
+      align-items: center;
+      background: #fff;
+      border: 1.5px solid #b6d8ff;
+      border-radius: 9px;
+      box-shadow: 0 2px 8px #eaf3ff;
+      padding: 2px 6px;
+      max-width: 340px;
+    }
+    .search-wrapper input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 8px 6px;
+      font-size: 1em;
+      outline: none;
+    }
+    .search-wrapper .qr-button,
+    .search-wrapper .clear-search-button {
+      background: none;
+      border: none;
+      padding: 0 8px;
+      color: #007aff;
+      font-size: 1.3em;
+      cursor: pointer;
+      border-radius: 7px;
+      transition: background 0.2s;
+    }
+    .search-wrapper .qr-button:hover,
+    .search-wrapper .clear-search-button:hover {
+      background: #eaf3ff;
+    }
     .pagination { margin: 24px 0; text-align: center;}
     .pagination button { margin:2px; padding:7px 14px; border-radius:7px; border:1px solid #b6d8ff; background:#fff; color:#007aff; cursor:pointer;}
     .pagination button.active { background:#007aff; color:#fff; font-weight: bold;}
@@ -44,6 +74,7 @@
     #admin-panel input, #admin-panel textarea, #admin-panel select { margin:4px 0 8px 0; padding:7px; width:95%; border-radius:7px; border:1.2px solid #b6d8ff;}
     #admin-panel textarea { min-height: 60px;}
     #log-output { font-size:0.95em; background:#f8fafc; padding:10px; border-radius:8px; margin-bottom:8px; max-height:120px; overflow-y:auto; border:1px solid #e6e8fa;}
+    #log-pagination {margin-bottom: 8px; text-align: right;}
     #backup-section {margin-top:32px; margin-bottom:24px; background:#fff; border-radius:14px; box-shadow:0 2px 12px #007aff16; padding:18px;}
     #backup-section.hidden {display: none;}
     .backup-btn {margin:4px; padding:8px 16px; border-radius:8px; border:1px solid #b6d8ff; background:#eaf3ff; color:#007aff; cursor:pointer;}
@@ -136,9 +167,10 @@
     <div class="header">
       <div>
         <h1>📚 Kindergarten-Bibliothek</h1>
-        <div class="search-container">
-          <input type="text" id="search" placeholder="Suchen ..." autocomplete="off" oninput="onSearchChange()">
+        <!-- Angepasste Suchleiste -->
+        <div class="search-wrapper">
           <button class="qr-button" onclick="showQRModal()" title="QR-Code scannen">📷</button>
+          <input type="text" id="search" placeholder="Suchen ..." autocomplete="off" oninput="onSearchChange()">
           <button class="clear-search-button" onclick="clearSearch()" title="Suchfeld leeren">✖️</button>
         </div>
         <div id="new-books"></div>
@@ -172,8 +204,11 @@
       <input type="file" id="import-file" accept=".json" onchange="importData(event)" style="display:none;">
       <button class="backup-btn" onclick="confirmAdminAction('import')">Backup hochladen</button>
       <button class="backup-btn" onclick="confirmAdminAction('reset')">Alle Daten löschen</button>
+      <div id="log-pagination"></div>
       <div id="log-output"></div>
     </div>
+    <!-- Der Bereich „Derzeit verliehen“ ist nur für Admins sichtbar.
+         Wir lassen ihn im HTML, JS blendet ihn nur bei admin=true ein. -->
     <div id="verliehen-uebersicht" class="hidden">
       <h3>Derzeit verliehen:</h3>
       <div id="gruppen-tabs"></div>
@@ -207,12 +242,31 @@
     let admin = false;
     let editingIdx = null;
     let cameraStream = null;
-    let photoTargetArea = null; // Für Kamera-Vollbild
+    let photoTargetArea = null;
     let verliehenGruppeIdx = 0;
+    let logPage = 1;
 
     const gruppenSymbole = ["⭐","☀️","🌙","🌈","💧","❄️","🗣️"];
     const gruppenNamen = ["Sterne","Sonne","Mond","Regenbogen","Regentropfen","Schneeflocken","Sprachförderung"];
 
+    // --- LOG: Nur Einträge aus dem letzten Jahr ---
+    function trimLogByDate() {
+      const now = Date.now();
+      log = log.filter(entry => {
+        const match = entry.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4}), (\d{1,2}):(\d{2}):(\d{2}):/);
+        if (!match) return true;
+        const day = Number(match[1]);
+        const month = Number(match[2]);
+        const year = Number(match[3]);
+        const hour = Number(match[4]);
+        const min = Number(match[5]);
+        const sec = Number(match[6]);
+        const entryDate = new Date(year, month - 1, day, hour, min, sec).getTime();
+        return (now - entryDate) < 365*24*60*60*1000;
+      });
+    }
+
+    // --- Initialisierung: Bücher und Log laden, alten Log trimmen ---
     if(!localStorage.books) {
       books = [
         {id:"B-0001", title:"Die kleine Raupe", category:"Bilderbuch", age:"3-6", status:"verfügbar", img:"", neu:true, description:"Ein Klassiker für Kinder."},
@@ -224,9 +278,12 @@
     } else {
       books = JSON.parse(localStorage.books);
       log = JSON.parse(localStorage.log || "[]");
+      trimLogByDate();
+      saveData();
     }
 
-    function renderBooks(searchVal="") {
+ 
+function renderBooks(searchVal="") {
       let filtered = books.filter(b => {
         let s = searchVal.trim().toLowerCase();
         if(!s) return true;
@@ -277,10 +334,13 @@
       document.getElementById("pagination").innerHTML = pagHtml;
     }
 
+    // --- NEU-Bereich mit blauem Hintergrund ---
     function renderNewBooks() {
       const neu = books.filter(b=>b.neu);
       if(!neu.length) { document.getElementById("new-books").innerHTML = ""; return;}
-      let html = `<div><strong>Neue Bücher:</strong></div><div id="new-books-scroll">`;
+      let html = `<div style="background:#eaf3ff;padding:12px;border-radius:12px;margin-bottom:12px;">
+        <strong style="color:#007aff;">Neue Bücher:</strong></div>
+        <div id="new-books-scroll">`;
       neu.forEach((book,idx)=>{
         let statusHtml = '';
         if(book.status === "verfügbar"){
@@ -288,7 +348,7 @@
         } else {
           statusHtml = `<span class="status-geliehen"><span class="symbol">📕</span> Geliehen von ${book.borrower || "?"}</span>`;
         }
-        html += `<div class="book">
+        html += `<div class="book" style="background:#eaf3ff;">
             ${book.img ? `<img src="${book.img}" class="cover" onclick="showImageModal(${books.indexOf(book)})">` : ""}
             <div class="book-details">
               <strong>${book.id} – ${book.title}</strong><br>
@@ -347,6 +407,7 @@
       books[idx].status = "ausgeliehen";
       books[idx].borrower = gruppenNamen[gruppeIdx];
       log.push(`${new Date().toLocaleString()}: ${books[idx].id} ausgeliehen an ${gruppenNamen[gruppeIdx]}`);
+      trimLogByDate();
       closeModal();
       renderBooks(document.getElementById("search").value);
       renderNewBooks();
@@ -368,6 +429,7 @@
       books[idx].status = "verfügbar";
       log.push(`${new Date().toLocaleString()}: ${books[idx].id} zurückgegeben von ${books[idx].borrower}`);
       books[idx].borrower = "";
+      trimLogByDate();
       closeModal();
       renderBooks(document.getElementById("search").value);
       renderNewBooks();
@@ -485,14 +547,12 @@
     }
     function takePhotoFull() {
       const video = document.getElementById("camera-video-full");
-      // Ziel: Hochformat 3:4 (z.B. 300x400px)
       let targetWidth = 300, targetHeight = 400;
       const canvas = document.createElement("canvas");
       canvas.width = targetWidth;
       canvas.height = targetHeight;
       const ctx = canvas.getContext("2d");
 
-      // Berechne mittigen Ausschnitt im Hochformat (von breitem Video)
       let srcW = video.videoWidth, srcH = video.videoHeight;
       let scale = Math.min(srcW / targetWidth, srcH / targetHeight);
 
@@ -553,6 +613,7 @@
           const data = JSON.parse(e.target.result);
           books = data.books||[];
           log = data.log||[];
+          trimLogByDate();
           saveData();
           renderBooks(document.getElementById("search").value);
           renderNewBooks();
@@ -576,8 +637,28 @@
       localStorage.books = JSON.stringify(books);
       localStorage.log = JSON.stringify(log);
     }
+
+    // --- LOG: Paginierung und Anzeige ---
     function updateLog() {
-      document.getElementById("log-output").innerText = log.slice(-30).join("\n");
+      trimLogByDate();
+      const maxPerPage = 100;
+      const totalPages = Math.max(1, Math.ceil(log.length / maxPerPage));
+      if (logPage > totalPages) logPage = totalPages;
+      const startIdx = log.length - logPage * maxPerPage;
+      const endIdx = log.length - (logPage - 1) * maxPerPage;
+      const logsToShow = log.slice(Math.max(0, startIdx), endIdx);
+      document.getElementById("log-output").innerText = logsToShow.join("\n");
+
+      // Paginierung anzeigen
+      let pagHtml = "";
+      for(let i=1; i<=totalPages; i++) {
+        pagHtml += `<button onclick="setLogPage(${i})" ${i===logPage?'style="font-weight:bold;background:#b6d8ff"':''}>${i}</button>`;
+      }
+      document.getElementById("log-pagination").innerHTML = pagHtml;
+    }
+    function setLogPage(p) {
+      logPage = p;
+      updateLog();
     }
 
     // Admin: Verliehen Übersicht mit Tabs
@@ -602,11 +683,11 @@
         const ausleihLog = log.filter(entry =>
           entry.includes(b.id) &&
           entry.includes("ausgeliehen an " + b.borrower)
-        ).slice(-1)[0]; // Letzter Ausleihvorgang
+        ).slice(-1)[0];
         const rueckLog = log.filter(entry =>
           entry.includes(b.id) &&
           entry.includes("zurückgegeben von " + b.borrower)
-        ).slice(-1)[0]; // Letzte Rückgabe
+        ).slice(-1)[0];
         let ausleihDatum = ausleihLog ? ausleihLog.split(":")[0] : "?";
         let rueckDatum = rueckLog ? rueckLog.split(":")[0] : "";
         content += `<li><b>${b.title}</b><br>
@@ -663,6 +744,7 @@
       loop();
     }
 
+    // Initiales Rendern
     renderBooks();
     renderNewBooks();
     updateLog();
