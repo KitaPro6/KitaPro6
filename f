@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kindergarten-Bibliothek</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f9faff; margin: 0;}
+    .container { max-width: 900px; margin: 0 auto; padding: 24px;}
+    .header { display: flex; justify-content: space-between; align-items: flex-start;}
+    h1 { 
+      margin: 0 0 10px 0; 
+      font-size: 2em; 
+      color: #007aff;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-shadow: none;
+      background: none;
+    }
+    /* Angepasste Suchleiste */
+    .search-wrapper {
+      display: flex;
+      align-items: center;
+      background: #fff;
+      border: 1.5px solid #b6d8ff;
+      border-radius: 9px;
+      box-shadow: 0 2px 8px #eaf3ff;
+      padding: 2px 6px;
+      max-width: 340px;
+    }
+    .search-wrapper input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 8px 6px;
+      font-size: 1em;
+      outline: none;
+    }
+    .search-wrapper .qr-button,
+    .search-wrapper .clear-search-button {
+      background: none;
+      border: none;
+      padding: 0 8px;
+      color: #007aff;
+      font-size: 1.3em;
+      cursor: pointer;
+      border-radius: 7px;
+      transition: background 0.2s;
+    }
+    .search-wrapper .qr-button:hover,
+    .search-wrapper .clear-search-button:hover {
+      background: #eaf3ff;
+    }
+    .pagination { margin: 24px 0; text-align: center;}
+    .pagination button { margin:2px; padding:7px 14px; border-radius:7px; border:1px solid #b6d8ff; background:#fff; color:#007aff; cursor:pointer;}
+    .pagination button.active { background:#007aff; color:#fff; font-weight: bold;}
+    .book { display: flex; gap:22px; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px #eee; margin-bottom: 18px; padding: 12px;}
+    .book img.cover { max-width: 90px; border-radius: 8px; }
+    .book-details { flex: 1;}
+    .status-verfuegbar { font-weight: bold; color: #228B22; }
+    .status-verfuegbar .symbol { color: #228B22; font-size: 1.2em; vertical-align: middle;}
+    .status-geliehen { font-weight: bold; color: #CC2222; }
+    .status-geliehen .symbol { color: #CC2222; font-size: 1.2em; vertical-align: middle;}
+    .group-btn { margin: 7px; font-size:2em; background:none; border:none; cursor:pointer;}
+    .group-btn:focus { outline: 2px solid #007aff;}
+    .edit-btn { background: #ffe5b3; color: #9a6a00; border:1px solid #e6b; border-radius:7px; padding:6px 10px;}
+    .edit-btn:hover { background:#fffbe8;}
+    .save-btn { background:#007aff; color:#fff; border:none; border-radius:7px; padding:6px 14px;}
+    .save-btn:hover { background:#0050a8;}
+    #modal, #qr-modal {position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.23); display:none; align-items:center; justify-content:center; z-index:10;}
+    #modal-content, #qr-modal-content { background:#fff; border-radius:16px; min-width:280px; max-width:350px; padding:24px; box-shadow:0 8px 36px #007aff22;}
+    #admin-login, #admin-panel { background:#fff; border-radius:12px; box-shadow: 0 3px 14px #007aff17; padding:18px; margin-bottom:16px;}
+    #admin-login.hidden, #admin-panel.hidden { display: none;}
+    #admin-panel input, #admin-panel textarea, #admin-panel select { margin:4px 0 8px 0; padding:7px; width:95%; border-radius:7px; border:1.2px solid #b6d8ff;}
+    #admin-panel textarea { min-height: 60px;}
+    #log-output { font-size:0.95em; background:#f8fafc; padding:10px; border-radius:8px; margin-bottom:8px; max-height:120px; overflow-y:auto; border:1px solid #e6e8fa;}
+    #log-pagination {margin-bottom: 8px; text-align: right;}
+    #backup-section {margin-top:32px; margin-bottom:24px; background:#fff; border-radius:14px; box-shadow:0 2px 12px #007aff16; padding:18px;}
+    #backup-section.hidden {display: none;}
+    .backup-btn {margin:4px; padding:8px 16px; border-radius:8px; border:1px solid #b6d8ff; background:#eaf3ff; color:#007aff; cursor:pointer;}
+    .backup-btn:hover {background:#b6d8ff;}
+    .camera-btn {margin-left:8px; background:#eaf3ff; color:#007aff; border:none; border-radius:7px; padding:6px 12px;}
+    .camera-btn:hover {background:#b6d8ff;}
+    .img-preview {max-width:110px; border-radius:8px; margin-bottom:8px;}
+    .neu-label {display:flex; align-items:center; gap:8px; font-weight:bold;}
+    .neu-label input[type=checkbox] {margin-right:6px;}
+    .neu-label span {font-weight:bold;}
+    #new-books {
+      max-width: 400px;
+      width: 100%;
+      margin: 0 auto 12px auto;
+      overflow-x: auto;
+    }
+    #new-books-scroll {
+      display: flex;
+      gap: 14px;
+      padding-bottom: 8px;
+    }
+    #new-books-scroll .book {
+      min-width: 180px;
+      max-width: 200px;
+      flex: 0 0 auto;
+    }
+    /* Vollbildkamera Overlay */
+    #camera-overlay {
+      position: fixed;
+      z-index: 9999;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #000b;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    #camera-video-full {
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      background: #222;
+    }
+    #camera-shutter-btn {
+      position: absolute;
+      left: 50%; bottom: 7vh;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.6);
+      border: none;
+      border-radius: 50%;
+      width: 80px; height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.6em;
+      color: #007aff;
+      box-shadow: 0 4px 24px #0005;
+      cursor: pointer;
+    }
+    #camera-close-btn {
+      position: absolute;
+      top: 28px; right: 28px;
+      background: rgba(0,0,0,0.25);
+      color: #fff;
+      border: none;
+      border-radius: 100px;
+      font-size: 2em;
+      width: 48px; height: 48px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+    }
+    /* Admin-Action Modal */
+    #admin-action-modal {
+      display:none; position:fixed;top:0;left:0;right:0;bottom:0;
+      background:rgba(0,0,0,.23);align-items:center;justify-content:center;z-index:99999;
+    }
+    #admin-action-modal-inner {
+      background:#fff;padding:28px 22px;border-radius:16px;box-shadow:0 8px 36px #007aff22;min-width:240px;max-width:340px;text-align:center;
+    }
+    /* Verliehen Übersicht Tabs */
+    #verliehen-uebersicht {background:#fff; border-radius:12px; box-shadow:0 2px 12px #007aff16; padding:16px; margin-bottom:18px;}
+    #gruppen-tabs button {margin:2px 6px 9px 0; padding:6px 16px; border-radius:7px; border:1px solid #b6d8ff; background:#eaf3ff; color:#007aff; cursor:pointer;}
+    #gruppen-tabs button.active {background:#007aff; color:#fff;}
+    #gruppen-content ul {margin:0 0 0 16px;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1>📚 Kindergarten-Bibliothek</h1>
+        <!-- Angepasste Suchleiste -->
+        <div class="search-wrapper">
+          <button class="qr-button" onclick="showQRModal()" title="QR-Code scannen">📷</button>
+          <input type="text" id="search" placeholder="Suchen ..." autocomplete="off" oninput="onSearchChange()">
+          <button class="clear-search-button" onclick="clearSearch()" title="Suchfeld leeren">✖️</button>
+        </div>
+        <div id="new-books"></div>
+      </div>
+    </div>
+    <div id="book-list"></div>
+    <div class="pagination" id="pagination"></div>
+    <div id="modal"><div id="modal-content"></div></div>
+    <div id="qr-modal"><div id="qr-modal-content"></div></div>
+    <div id="admin-login" class="hidden">
+      <input type="password" id="admin-pw" placeholder="Admin-Passwort" style="width: 120px;">
+      <button onclick="checkAdmin()">Login</button>
+    </div>
+    <button id="admin-login-btn" onclick="showAdminLogin()">🔑 Admin</button>
+    <div id="admin-panel" class="hidden">
+      <h3>Buch hinzufügen</h3>
+      <input id="new-id" placeholder="ID (z.B. B-0003)">
+      <input id="new-title" placeholder="Titel">
+      <input id="new-cat" placeholder="Kategorie">
+      <input id="new-age" placeholder="Alter (z.B. 3-6)">
+      <label class="neu-label"><input type="checkbox" id="new-neu"><span>Neu</span></label>
+      <textarea id="new-desc" placeholder="Beschreibung"></textarea>
+      <div id="new-img-area"></div>
+      <button class="camera-btn" style="font-size:1.4em;" onclick="openCamera('new')">📷 Bild aufnehmen</button>
+      <button onclick="addBook()">➕ Hinzufügen</button>
+      <button onclick="logoutAdmin()">Logout</button>
+    </div>
+    <div id="backup-section" class="hidden">
+      <h3>Backup</h3>
+      <button class="backup-btn" onclick="confirmAdminAction('export')">Backup erstellen</button>
+      <input type="file" id="import-file" accept=".json" onchange="importData(event)" style="display:none;">
+      <button class="backup-btn" onclick="confirmAdminAction('import')">Backup hochladen</button>
+      <button class="backup-btn" onclick="confirmAdminAction('reset')">Alle Daten löschen</button>
+      <div id="log-pagination"></div>
+      <div id="log-output"></div>
+    </div>
+    <!-- Der Bereich „Derzeit verliehen“ ist nur für Admins sichtbar.
+         Wir lassen ihn im HTML, JS blendet ihn nur bei admin=true ein. -->
+    <div id="verliehen-uebersicht" class="hidden">
+      <h3>Derzeit verliehen:</h3>
+      <div id="gruppen-tabs"></div>
+      <div id="gruppen-content"></div>
+    </div>
+    <!-- Kamera-Vollbild Overlay -->
+    <div id="camera-overlay">
+      <video id="camera-video-full" autoplay playsinline></video>
+      <button id="camera-shutter-btn" onclick="takePhotoFull()">📸</button>
+      <button id="camera-close-btn" onclick="closeCameraFull()">&times;</button>
+      <div style="position:absolute;bottom:88px;left:0;right:0;text-align:center;color:#fff;font-size:1.1em;text-shadow:0 1px 4px #000;">
+        Bitte Buch hoch ins Bild halten!
+      </div>
+    </div>
+    <!-- Admin-Action Passwort-Modal -->
+    <div id="admin-action-modal">
+      <div id="admin-action-modal-inner">
+        <div id="admin-action-msg"></div>
+        <input type="password" id="admin-action-pw" placeholder="Admin-Passwort" style="width:120px;margin:8px 0;">
+        <br>
+        <button onclick="doAdminAction()">Bestätigen</button>
+        <button onclick="closeAdminActionModal()">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <script>
+    let books = [];
+    let log = [];
+    let page = 1;
+    let admin = false;
+    let editingIdx = null;
+    let cameraStream = null;
+    let photoTargetArea = null;
+    let verliehenGruppeIdx = 0;
+    let logPage = 1;
+
+    const gruppenSymbole = ["⭐","☀️","🌙","🌈","💧","❄️","🗣️"];
+    const gruppenNamen = ["Sterne","Sonne","Mond","Regenbogen","Regentropfen","Schneeflocken","Sprachförderung"];
+
+    // --- LOG: Nur Einträge aus dem letzten Jahr ---
+    function trimLogByDate() {
+      const now = Date.now();
+      log = log.filter(entry => {
+        const match = entry.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4}), (\d{1,2}):(\d{2}):(\d{2}):/);
+        if (!match) return true;
+        const day = Number(match[1]);
+        const month = Number(match[2]);
+        const year = Number(match[3]);
+        const hour = Number(match[4]);
+        const min = Number(match[5]);
+        const sec = Number(match[6]);
+        const entryDate = new Date(year, month - 1, day, hour, min, sec).getTime();
+        return (now - entryDate) < 365*24*60*60*1000;
+      });
+    }
+
+    // --- Initialisierung: Bücher und Log laden, alten Log trimmen ---
+    if(!localStorage.books) {
+      books = [
+        {id:"B-0001", title:"Die kleine Raupe", category:"Bilderbuch", age:"3-6", status:"verfügbar", img:"", neu:true, description:"Ein Klassiker für Kinder."},
+        {id:"B-0002", title:"Leo Lausemaus", category:"Vorlesebuch", age:"4-7", status:"verfügbar", img:"", neu:false, description:"Abenteuer von Leo Lausemaus."},
+        {id:"B-0003", title:"Conni kommt", category:"Bilderbuch", age:"3-6", status:"verfügbar", img:"", neu:true, description:"Conni erlebt den Kindergarten."}
+      ];
+      log = [];
+      saveData();
+    } else {
+      books = JSON.parse(localStorage.books);
+      log = JSON.parse(localStorage.log || "[]");
+      trimLogByDate();
+      saveData();
+    }
+
+ 
+function renderBooks(searchVal="") {
+      let filtered = books.filter(b => {
+        let s = searchVal.trim().toLowerCase();
+        if(!s) return true;
+        return (b.title+b.id+b.category+b.age).toLowerCase().includes(s);
+      });
+
+      const total = filtered.filter(b=>!b.neu).length;
+      const maxPage = Math.max(1,Math.ceil(total/30));
+      if(page > maxPage) page = maxPage;
+
+      if(page === 1 && !searchVal) {
+        renderNewBooks();
+      } else {
+        document.getElementById("new-books").innerHTML = "";
+      }
+
+      let html = "";
+      let booksToShow = filtered.filter(b=>!b.neu).slice((page-1)*30, page*30);
+      booksToShow.forEach((book,idx) => {
+        let statusHtml = '';
+        if(book.status === "verfügbar"){
+          statusHtml = `<span class="status-verfuegbar"><span class="symbol">📗</span> Verfügbar</span>`;
+        } else {
+          statusHtml = `<span class="status-geliehen"><span class="symbol">📕</span> Geliehen von ${book.borrower || "?"}</span>`;
+        }
+        html += `
+        <div class="book">
+          ${book.img ? `<img src="${book.img}" class="cover" onclick="showImageModal(${books.indexOf(book)})">` : ""}
+          <div class="book-details">
+            <strong>${book.id} – ${book.title}</strong><br>
+            Kategorie: ${book.category}<br>
+            Alter: ${book.age}<br>
+            Status: ${statusHtml}<br>
+            ${book.status === "verfügbar"
+                ? `<button onclick="ausleihenStart(${books.indexOf(book)})">Ausleihen</button>`
+                : `<button onclick="zurueckgebenStart(${books.indexOf(book)})">Zurückstellen</button>`
+            }
+            ${(admin ? `<button class="edit-btn" onclick="editBook(${books.indexOf(book)})">Bearbeiten</button>`:"")}
+          </div>
+        </div>`;
+      });
+      document.getElementById("book-list").innerHTML = html;
+
+      let pagHtml = "";
+      for(let i=1;i<=maxPage;i++) {
+        pagHtml += `<button onclick="gotoPage(${i})" class="${i===page?'active':''}">${i}</button>`;
+      }
+      document.getElementById("pagination").innerHTML = pagHtml;
+    }
+
+    // --- NEU-Bereich mit blauem Hintergrund ---
+    function renderNewBooks() {
+      const neu = books.filter(b=>b.neu);
+      if(!neu.length) { document.getElementById("new-books").innerHTML = ""; return;}
+      let html = `<div style="background:#eaf3ff;padding:12px;border-radius:12px;margin-bottom:12px;">
+        <strong style="color:#007aff;">Neue Bücher:</strong></div>
+        <div id="new-books-scroll">`;
+      neu.forEach((book,idx)=>{
+        let statusHtml = '';
+        if(book.status === "verfügbar"){
+          statusHtml = `<span class="status-verfuegbar"><span class="symbol">📗</span> Verfügbar</span>`;
+        } else {
+          statusHtml = `<span class="status-geliehen"><span class="symbol">📕</span> Geliehen von ${book.borrower || "?"}</span>`;
+        }
+        html += `<div class="book" style="background:#eaf3ff;">
+            ${book.img ? `<img src="${book.img}" class="cover" onclick="showImageModal(${books.indexOf(book)})">` : ""}
+            <div class="book-details">
+              <strong>${book.id} – ${book.title}</strong><br>
+              Kategorie: ${book.category}<br>
+              Alter: ${book.age}<br>
+              Status: ${statusHtml}<br>
+              ${book.status === "verfügbar"
+                  ? `<button onclick="ausleihenStart(${books.indexOf(book)})">Ausleihen</button>`
+                  : `<button onclick="zurueckgebenStart(${books.indexOf(book)})">Zurückstellen</button>`
+              }
+              ${(admin ? `<button class="edit-btn" onclick="editBook(${books.indexOf(book)})">Bearbeiten</button>`:"")}
+            </div>
+          </div>`;
+      });
+      html += `</div>`;
+      document.getElementById("new-books").innerHTML = html;
+    }
+
+    function gotoPage(p) { page = p; renderBooks(document.getElementById("search").value); }
+    function onSearchChange() { page = 1; renderBooks(document.getElementById("search").value);}
+    function clearSearch() { document.getElementById("search").value = ""; page = 1; renderBooks();}
+
+    function showImageModal(idx) {
+      const b = books[idx];
+      let html = `<strong>${b.id} – ${b.title}</strong><br>`;
+      if(b.img) html += `<img src="${b.img}" style="max-width:180px; border-radius:8px;"><br>`;
+      html += `<br>Kategorie: ${b.category}<br>Alter: ${b.age}<br>`;
+      html += `<br>${b.description||""}<br>`;
+      html += `<br><button onclick="closeModal()">Schließen</button>`;
+      document.getElementById("modal-content").innerHTML = html;
+      document.getElementById("modal").style.display = "flex";
+    }
+    function closeModal() { document.getElementById("modal").style.display = "none"; }
+
+    function ausleihenStart(idx) {
+      if(books[idx].status!=="verfügbar") return;
+      let modal = `<div style="text-align:center;">
+        <div>Gruppe auswählen:</div><div style="margin:10px 0;">`;
+      gruppenSymbole.forEach((symb,i) => {
+        modal += `<button class="group-btn" onclick="ausleihenGruppe(${idx},${i})" title="${gruppenNamen[i]}">${symb}</button>`;
+      });
+      modal += `</div>
+        <button onclick="closeModal()">Abbrechen</button></div>`;
+      document.getElementById("modal-content").innerHTML = modal;
+      document.getElementById("modal").style.display = "flex";
+    }
+    function ausleihenGruppe(idx, gruppeIdx) {
+      let modal = `<div style="text-align:center;">
+        <div>Buch wirklich für <span style="font-size:2em;">${gruppenSymbole[gruppeIdx]}</span> ausleihen?</div>
+        <button class="save-btn" onclick="ausleihenFinal(${idx},${gruppeIdx})">Ja</button>
+        <button onclick="closeModal()">Nein</button>
+        </div>`;
+      document.getElementById("modal-content").innerHTML = modal;
+    }
+    function ausleihenFinal(idx, gruppeIdx) {
+      books[idx].status = "ausgeliehen";
+      books[idx].borrower = gruppenNamen[gruppeIdx];
+      log.push(`${new Date().toLocaleString()}: ${books[idx].id} ausgeliehen an ${gruppenNamen[gruppeIdx]}`);
+      trimLogByDate();
+      closeModal();
+      renderBooks(document.getElementById("search").value);
+      renderNewBooks();
+      updateLog();
+      saveData();
+      renderVerliehenUebersicht(gruppeIdx);
+    }
+    function zurueckgebenStart(idx) {
+      if(books[idx].status!=="ausgeliehen") return;
+      let modal = `<div style="text-align:center;">
+        <div>Buch wirklich zurückstellen?</div>
+        <button class="save-btn" onclick="zurueckgebenFinal(${idx})">Ja</button>
+        <button onclick="closeModal()">Nein</button>
+        </div>`;
+      document.getElementById("modal-content").innerHTML = modal;
+      document.getElementById("modal").style.display = "flex";
+    }
+    function zurueckgebenFinal(idx) {
+      books[idx].status = "verfügbar";
+      log.push(`${new Date().toLocaleString()}: ${books[idx].id} zurückgegeben von ${books[idx].borrower}`);
+      books[idx].borrower = "";
+      trimLogByDate();
+      closeModal();
+      renderBooks(document.getElementById("search").value);
+      renderNewBooks();
+      updateLog();
+      saveData();
+      renderVerliehenUebersicht(verliehenGruppeIdx);
+    }
+
+    function showAdminLogin() {
+      document.getElementById("admin-login").classList.remove("hidden");
+      document.getElementById("admin-panel").classList.add("hidden");
+      document.getElementById("admin-login-btn").style.display="none";
+    }
+    function checkAdmin() {
+      const pw = document.getElementById("admin-pw").value;
+      if(pw==="kitadmin") {
+        admin = true;
+        document.getElementById("admin-login").classList.add("hidden");
+        document.getElementById("admin-panel").classList.remove("hidden");
+        document.getElementById("backup-section").classList.remove("hidden");
+        renderBooks(document.getElementById("search").value);
+        renderNewBooks();
+        renderVerliehenUebersicht(verliehenGruppeIdx);
+      } else {
+        alert("Falsches Passwort!");
+      }
+    }
+    function logoutAdmin() {
+      admin = false;
+      document.getElementById("admin-panel").classList.add("hidden");
+      document.getElementById("admin-login-btn").style.display="inline-block";
+      document.getElementById("admin-login").classList.add("hidden");
+      document.getElementById("backup-section").classList.add("hidden");
+      document.getElementById("verliehen-uebersicht").classList.add("hidden");
+      renderBooks(document.getElementById("search").value);
+      renderNewBooks();
+    }
+
+    function addBook() {
+      const id = document.getElementById("new-id").value.trim();
+      const title = document.getElementById("new-title").value.trim();
+      const category = document.getElementById("new-cat").value.trim();
+      const age = document.getElementById("new-age").value.trim();
+      const neu = document.getElementById("new-neu").checked;
+      const description = document.getElementById("new-desc").value.trim();
+      const img = document.getElementById("new-img-area").dataset.img || "";
+      if(!id||!title||!category||!age) { alert("Bitte alle Pflichtfelder ausfüllen!"); return;}
+      books.push({id,title,category,age,neu,description,img,status:"verfügbar"});
+      saveData();
+      renderBooks(document.getElementById("search").value);
+      renderNewBooks();
+      document.getElementById("new-id").value = "";
+      document.getElementById("new-title").value = "";
+      document.getElementById("new-cat").value = "";
+      document.getElementById("new-age").value = "";
+      document.getElementById("new-neu").checked = false;
+      document.getElementById("new-desc").value = "";
+      document.getElementById("new-img-area").innerHTML = "";
+      document.getElementById("new-img-area").dataset.img = "";
+    }
+
+    function editBook(idx) {
+      editingIdx = idx;
+      const b = books[idx];
+      let html = `<h4>Buch bearbeiten</h4>
+        <input id="edit-id" value="${b.id}">
+        <input id="edit-title" value="${b.title}">
+        <input id="edit-cat" value="${b.category}">
+        <input id="edit-age" value="${b.age}">
+        <label class="neu-label"><input type="checkbox" id="edit-neu" ${b.neu?"checked":""}><span>Neu</span></label>
+        <textarea id="edit-desc">${b.description||""}</textarea>
+        <div id="edit-img-area"></div>
+        <button class="camera-btn" style="font-size:1.4em;" onclick="openCamera('edit')">📷 Bild aufnehmen</button>
+        <button class="save-btn" onclick="saveEdit()">Speichern</button>
+        <button onclick="closeModal()">Abbrechen</button>`;
+      document.getElementById("modal-content").innerHTML = html;
+      document.getElementById("modal").style.display = "flex";
+      if(b.img){
+        document.getElementById("edit-img-area").innerHTML = `<img src="${b.img}" class="img-preview">`;
+        document.getElementById("edit-img-area").dataset.img = b.img;
+      }
+    }
+    function saveEdit() {
+      const b = books[editingIdx];
+      b.id = document.getElementById("edit-id").value;
+      b.title = document.getElementById("edit-title").value;
+      b.category = document.getElementById("edit-cat").value;
+      b.age = document.getElementById("edit-age").value;
+      b.neu = document.getElementById("edit-neu").checked;
+      b.description = document.getElementById("edit-desc").value;
+      b.img = document.getElementById("edit-img-area").dataset.img || "";
+      saveData();
+      closeModal();
+      renderBooks(document.getElementById("search").value);
+      renderNewBooks();
+    }
+
+    // KAMERA Vollbild, 3:4 Hochformat
+    function openCamera(mode) {
+      photoTargetArea = mode==="new" ? "new-img-area" : "edit-img-area";
+      document.getElementById("camera-overlay").style.display = "flex";
+      const video = document.getElementById("camera-video-full");
+      navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}})
+        .then(stream => {
+          cameraStream = stream;
+          video.srcObject = stream;
+          video.play();
+        });
+    }
+    function closeCameraFull() {
+      if(cameraStream) cameraStream.getTracks().forEach(track => track.stop());
+      cameraStream = null;
+      document.getElementById("camera-video-full").srcObject = null;
+      document.getElementById("camera-overlay").style.display = "none";
+    }
+    function takePhotoFull() {
+      const video = document.getElementById("camera-video-full");
+      let targetWidth = 300, targetHeight = 400;
+      const canvas = document.createElement("canvas");
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      const ctx = canvas.getContext("2d");
+
+      let srcW = video.videoWidth, srcH = video.videoHeight;
+      let scale = Math.min(srcW / targetWidth, srcH / targetHeight);
+
+      let cropW = targetWidth * scale;
+      let cropH = targetHeight * scale;
+      let sx = (srcW - cropW) / 2;
+      let sy = (srcH - cropH) / 2;
+      ctx.drawImage(video, sx, sy, cropW, cropH, 0, 0, targetWidth, targetHeight);
+      
+      const dataURL = canvas.toDataURL("image/jpeg", 0.7);
+      document.getElementById(photoTargetArea).innerHTML = `<img src="${dataURL}" class="img-preview">`;
+      document.getElementById(photoTargetArea).dataset.img = dataURL;
+      closeCameraFull();
+    }
+
+    // Backup-Bereich mit Passwort-Abfrage
+    let adminAction = null;
+    function confirmAdminAction(action) {
+      adminAction = action;
+      let msg = "";
+      if(action==="export") msg = "Backup erstellen. Bitte Admin-Passwort eingeben:";
+      if(action==="import") msg = "Backup hochladen. Bitte Admin-Passwort eingeben:";
+      if(action==="reset") msg = "Alle Daten löschen. Bitte Admin-Passwort eingeben:";
+      document.getElementById("admin-action-msg").innerText = msg;
+      document.getElementById("admin-action-pw").value = "";
+      document.getElementById("admin-action-modal").style.display = "flex";
+    }
+    function closeAdminActionModal() {
+      adminAction = null;
+      document.getElementById("admin-action-modal").style.display = "none";
+    }
+    function doAdminAction() {
+      const pw = document.getElementById("admin-action-pw").value;
+      if(pw!=="kitadmin") { alert("Falsches Passwort!"); return;}
+      document.getElementById("admin-action-modal").style.display = "none";
+      if(adminAction==="export") exportData();
+      if(adminAction==="import") document.getElementById('import-file').click();
+      if(adminAction==="reset") resetData();
+      adminAction = null;
+    }
+
+    function exportData() {
+      const data = {books,log};
+      const blob = new Blob([JSON.stringify(data)], {type:"application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "backup.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    function importData(ev) {
+      const file = ev.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          books = data.books||[];
+          log = data.log||[];
+          trimLogByDate();
+          saveData();
+          renderBooks(document.getElementById("search").value);
+          renderNewBooks();
+          updateLog();
+          renderVerliehenUebersicht(verliehenGruppeIdx);
+        } catch {
+          alert("Fehler beim Laden!");
+        }
+      }
+      reader.readAsText(file);
+    }
+    function resetData() {
+      if(confirm("Wirklich alle Daten löschen?")) {
+        books = []; log = [];
+        saveData();
+        renderBooks(); renderNewBooks(); updateLog();
+        renderVerliehenUebersicht(verliehenGruppeIdx);
+      }
+    }
+    function saveData() {
+      localStorage.books = JSON.stringify(books);
+      localStorage.log = JSON.stringify(log);
+    }
+
+    // --- LOG: Paginierung und Anzeige ---
+    function updateLog() {
+      trimLogByDate();
+      const maxPerPage = 100;
+      const totalPages = Math.max(1, Math.ceil(log.length / maxPerPage));
+      if (logPage > totalPages) logPage = totalPages;
+      const startIdx = log.length - logPage * maxPerPage;
+      const endIdx = log.length - (logPage - 1) * maxPerPage;
+      const logsToShow = log.slice(Math.max(0, startIdx), endIdx);
+      document.getElementById("log-output").innerText = logsToShow.join("\n");
+
+      // Paginierung anzeigen
+      let pagHtml = "";
+      for(let i=1; i<=totalPages; i++) {
+        pagHtml += `<button onclick="setLogPage(${i})" ${i===logPage?'style="font-weight:bold;background:#b6d8ff"':''}>${i}</button>`;
+      }
+      document.getElementById("log-pagination").innerHTML = pagHtml;
+    }
+    function setLogPage(p) {
+      logPage = p;
+      updateLog();
+    }
+
+    // Admin: Verliehen Übersicht mit Tabs
+    function renderVerliehenUebersicht(selectedGruppeIdx = 0) {
+      verliehenGruppeIdx = selectedGruppeIdx;
+      if (!admin) {
+        document.getElementById("verliehen-uebersicht").classList.add("hidden");
+        return;
+      }
+      document.getElementById("verliehen-uebersicht").classList.remove("hidden");
+      // Tabs
+      let tabs = "";
+      gruppenNamen.forEach((grp, i) => {
+        tabs += `<button onclick="renderVerliehenUebersicht(${i})" class="${i==selectedGruppeIdx?'active':''}">${grp} ${gruppenSymbole[i]}</button>`;
+      });
+      document.getElementById("gruppen-tabs").innerHTML = tabs;
+      // Daten für diese Gruppe
+      const aktuellGeliehen = books.filter(b => b.status === "ausgeliehen" && b.borrower === gruppenNamen[selectedGruppeIdx]);
+      let content = `<b>${aktuellGeliehen.length}</b> Buch${aktuellGeliehen.length !== 1 ? "er" : ""} momentan verliehen.<br><ul>`;
+      aktuellGeliehen.forEach(b => {
+        // Datum aus Log holen
+        const ausleihLog = log.filter(entry =>
+          entry.includes(b.id) &&
+          entry.includes("ausgeliehen an " + b.borrower)
+        ).slice(-1)[0];
+        const rueckLog = log.filter(entry =>
+          entry.includes(b.id) &&
+          entry.includes("zurückgegeben von " + b.borrower)
+        ).slice(-1)[0];
+        let ausleihDatum = ausleihLog ? ausleihLog.split(":")[0] : "?";
+        let rueckDatum = rueckLog ? rueckLog.split(":")[0] : "";
+        content += `<li><b>${b.title}</b><br>
+           Geliehen: ${ausleihDatum}${rueckDatum ? "<br>Zurück: "+rueckDatum : ""}
+          </li>`;
+      });
+      content += "</ul>";
+      document.getElementById("gruppen-content").innerHTML = content;
+    }
+
+    function showQRModal() {
+      let html = `<video id="qr-video" style="width:260px; border-radius:12px;"></video><br>
+      <button onclick="closeQRModal()">Abbrechen</button>
+      <div id="qr-result"></div>`;
+      document.getElementById("qr-modal-content").innerHTML = html;
+      document.getElementById("qr-modal").style.display = "flex";
+      startQRScanner();
+    }
+    function closeQRModal() {
+      document.getElementById("qr-modal").style.display = "none";
+      stopQRScanner();
+    }
+    let qrStream = null;
+    function startQRScanner() {
+      const video = document.getElementById("qr-video");
+      navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(stream=>{
+        qrStream = stream; video.srcObject = stream; video.setAttribute("playsinline",true); video.play();
+        scanLoop(video);
+      });
+    }
+    function stopQRScanner() {
+      if(qrStream) qrStream.getTracks().forEach(track=>track.stop());
+      qrStream = null;
+    }
+    function scanLoop(video) {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      function loop() {
+        if(!qrStream) return;
+        if(video.readyState !== video.HAVE_ENOUGH_DATA){ requestAnimationFrame(loop); return;}
+        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+        ctx.drawImage(video,0,0,canvas.width,canvas.height);
+        const imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
+        const code = jsQR(imageData.data,canvas.width,canvas.height);
+        if(code) {
+          document.getElementById("qr-result").innerHTML = "<strong>QR gefunden:</strong> "+code.data;
+          document.getElementById("search").value = code.data;
+          closeQRModal();
+          onSearchChange();
+        } else {
+          requestAnimationFrame(loop);
+        }
+      }
+      loop();
+    }
+
+    // Initiales Rendern
+    renderBooks();
+    renderNewBooks();
+    updateLog();
+  </script>
+</body>
+</html>
