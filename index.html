@@ -7,8 +7,18 @@
   <style>
     body { font-family: Arial, sans-serif; background: #f9faff; margin: 0;}
     .container { max-width: 900px; margin: 0 auto; padding: 24px;}
-    .header { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px;}
-    h1 { margin: 0 0 10px 0; font-size: 2em; color: #007aff;}
+    .header { display: flex; justify-content: space-between; align-items: flex-start;}
+    h1 { 
+      margin: 0 0 10px 0; 
+      font-size: 2.6em; 
+      color: #007aff;
+      font-weight: 900;
+      text-shadow: 2px 2px 0 #eaf3ff, 0 8px 40px #007aff33;
+      background: linear-gradient(90deg, #8ecaff 0%, #007aff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 0.03em;
+    }
     .search-container { display: flex; gap: 8px; align-items: center;}
     #search { padding: 8px; font-size: 1em; border-radius: 7px; border: 1.5px solid #b6d8ff;}
     .qr-button, .clear-search-button { background: #fff; color: #007aff; border: none; border-radius: 7px; font-size: 1.1em; padding: 8px; cursor: pointer;}
@@ -23,8 +33,8 @@
     .status-verfuegbar .symbol { color: #228B22; font-size: 1.2em; vertical-align: middle;}
     .status-geliehen { font-weight: bold; color: #CC2222; }
     .status-geliehen .symbol { color: #CC2222; font-size: 1.2em; vertical-align: middle;}
-    .group-btn { margin: 2px; padding: 7px 12px; border-radius: 7px; border: 1.2px solid #eaf3ff; background: #eaf3ff; color: #007aff; cursor: pointer; font-weight: 600;}
-    .group-btn:hover { background:#b6d8ff;}
+    .group-btn { margin: 7px; font-size:2em; background:none; border:none; cursor:pointer;}
+    .group-btn:focus { outline: 2px solid #007aff;}
     .edit-btn { background: #ffe5b3; color: #9a6a00; border:1px solid #e6b; border-radius:7px; padding:6px 10px;}
     .edit-btn:hover { background:#fffbe8;}
     .save-btn { background:#007aff; color:#fff; border:none; border-radius:7px; padding:6px 14px;}
@@ -42,13 +52,16 @@
     .camera-btn {margin-left:8px; background:#eaf3ff; color:#007aff; border:none; border-radius:7px; padding:6px 12px;}
     .camera-btn:hover {background:#b6d8ff;}
     .img-preview {max-width:110px; border-radius:8px; margin-bottom:8px;}
+    .neu-label {display:flex; align-items:center; gap:8px; font-weight:bold;}
+    .neu-label input[type=checkbox] {margin-right:6px;}
+    .neu-label span {font-weight:bold;}
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
       <div>
-        <h1>📚 Kindergarten-Bibliothek</h1>
+        <h1>Kindergarten<br>Bibliothek</h1>
         <div class="search-container">
           <input type="text" id="search" placeholder="Suchen ..." autocomplete="off" oninput="onSearchChange()">
           <button class="qr-button" onclick="showQRModal()" title="QR-Code scannen">📷</button>
@@ -72,14 +85,14 @@
       <input id="new-title" placeholder="Titel">
       <input id="new-cat" placeholder="Kategorie">
       <input id="new-age" placeholder="Alter (z.B. 3-6)">
-      <label><input type="checkbox" id="new-neu"> Neu</label>
+      <label class="neu-label"><input type="checkbox" id="new-neu"><span>Neu</span></label>
       <textarea id="new-desc" placeholder="Beschreibung"></textarea>
       <div id="new-img-area"></div>
       <button class="camera-btn" onclick="openCamera('new')">📷 Bild aufnehmen</button>
       <button onclick="addBook()">➕ Hinzufügen</button>
       <button onclick="logoutAdmin()">Logout</button>
     </div>
-    <div id="backup-section">
+    <div id="backup-section" class="hidden">
       <h3>Backup</h3>
       <button class="backup-btn" onclick="exportData()">Backup erstellen</button>
       <input type="file" id="import-file" accept=".json" onchange="importData(event)" style="display:none;">
@@ -97,7 +110,9 @@
     let editingIdx = null;
     let cameraStream = null;
 
-    const gruppen = ["Sterne","Sonne","Mond","Regenbogen","Regentropfen","Schneeflocken","Sprachförderung"];
+    // Gruppen-Symbole
+    const gruppenSymbole = ["⭐","☀️","🌙","🌈","💧","❄️","🗣️"];
+    const gruppenNamen = ["Sterne","Sonne","Mond","Regenbogen","Regentropfen","Schneeflocken","Sprachförderung"];
 
     // Dummy-Daten für Demo
     if(!localStorage.books) {
@@ -113,7 +128,6 @@
       log = JSON.parse(localStorage.log || "[]");
     }
 
-    // Anzeige
     function renderBooks(searchVal="") {
       let filtered = books.filter(b => {
         let s = searchVal.trim().toLowerCase();
@@ -199,7 +213,6 @@
     function onSearchChange() { page = 1; renderBooks(document.getElementById("search").value);}
     function clearSearch() { document.getElementById("search").value = ""; page = 1; renderBooks();}
 
-    // Modal Bild/Beschreibung
     function showImageModal(idx) {
       const b = books[idx];
       let html = `<strong>${b.id} – ${b.title}</strong><br>`;
@@ -212,31 +225,31 @@
     }
     function closeModal() { document.getElementById("modal").style.display = "none"; }
 
-    // Ausleih-Flow
+    // Popup mit Gruppensymbolen
     function ausleihenStart(idx) {
       if(books[idx].status!=="verfügbar") return;
       let modal = `<div style="text-align:center;">
         <div>Gruppe auswählen:</div><div style="margin:10px 0;">`;
-      gruppen.forEach(gruppe => {
-        modal += `<button class="group-btn" onclick="ausleihenGruppe(${idx},'${gruppe}')">${gruppe}</button> `;
+      gruppenSymbole.forEach((symb,i) => {
+        modal += `<button class="group-btn" onclick="ausleihenGruppe(${idx},${i})" title="${gruppenNamen[i]}">${symb}</button>`;
       });
       modal += `</div>
         <button onclick="closeModal()">Abbrechen</button></div>`;
       document.getElementById("modal-content").innerHTML = modal;
       document.getElementById("modal").style.display = "flex";
     }
-    function ausleihenGruppe(idx, gruppe) {
+    function ausleihenGruppe(idx, gruppeIdx) {
       let modal = `<div style="text-align:center;">
-        <div>Buch wirklich für <strong>${gruppe}</strong> ausleihen?</div>
-        <button class="save-btn" onclick="ausleihenFinal(${idx},'${gruppe}')">Ja</button>
+        <div>Buch wirklich für <span style="font-size:2em;">${gruppenSymbole[gruppeIdx]}</span> ausleihen?</div>
+        <button class="save-btn" onclick="ausleihenFinal(${idx},${gruppeIdx})">Ja</button>
         <button onclick="closeModal()">Nein</button>
         </div>`;
       document.getElementById("modal-content").innerHTML = modal;
     }
-    function ausleihenFinal(idx, gruppe) {
+    function ausleihenFinal(idx, gruppeIdx) {
       books[idx].status = "ausgeliehen";
-      books[idx].borrower = gruppe;
-      log.push(`${new Date().toLocaleString()}: ${books[idx].id} ausgeliehen an ${gruppe}`);
+      books[idx].borrower = gruppenNamen[gruppeIdx];
+      log.push(`${new Date().toLocaleString()}: ${books[idx].id} ausgeliehen an ${gruppenNamen[gruppeIdx]}`);
       closeModal();
       renderBooks(document.getElementById("search").value);
       renderNewBooks();
@@ -264,7 +277,6 @@
       saveData();
     }
 
-    // Admin-Login
     function showAdminLogin() {
       document.getElementById("admin-login").classList.remove("hidden");
       document.getElementById("admin-panel").classList.add("hidden");
@@ -276,6 +288,7 @@
         admin = true;
         document.getElementById("admin-login").classList.add("hidden");
         document.getElementById("admin-panel").classList.remove("hidden");
+        document.getElementById("backup-section").classList.remove("hidden");
         renderBooks(document.getElementById("search").value);
         renderNewBooks();
       } else {
@@ -287,11 +300,11 @@
       document.getElementById("admin-panel").classList.add("hidden");
       document.getElementById("admin-login-btn").style.display="inline-block";
       document.getElementById("admin-login").classList.add("hidden");
+      document.getElementById("backup-section").classList.add("hidden");
       renderBooks(document.getElementById("search").value);
       renderNewBooks();
     }
 
-    // Buch hinzufügen
     function addBook() {
       const id = document.getElementById("new-id").value.trim();
       const title = document.getElementById("new-title").value.trim();
@@ -315,7 +328,6 @@
       document.getElementById("new-img-area").dataset.img = "";
     }
 
-    // Bearbeiten
     function editBook(idx) {
       editingIdx = idx;
       const b = books[idx];
@@ -324,7 +336,7 @@
         <input id="edit-title" value="${b.title}">
         <input id="edit-cat" value="${b.category}">
         <input id="edit-age" value="${b.age}">
-        <label><input type="checkbox" id="edit-neu" ${b.neu?"checked":""}> Neu</label>
+        <label class="neu-label"><input type="checkbox" id="edit-neu" ${b.neu?"checked":""}><span>Neu</span></label>
         <textarea id="edit-desc">${b.description||""}</textarea>
         <div id="edit-img-area"></div>
         <button class="camera-btn" onclick="openCamera('edit')">📷 Bild aufnehmen</button>
@@ -352,7 +364,7 @@
       renderNewBooks();
     }
 
-    // Bild aufnehmen (Kamera mit Komprimierung)
+    // Kamera mit Komprimierung, immer Hauptkamera
     function openCamera(mode) {
       let areaId = mode==="new" ? "new-img-area" : "edit-img-area";
       let html = `<video id="camera-video" style="width:260px; border-radius:12px;"></video><br>
@@ -363,7 +375,7 @@
       }else{
         document.getElementById(areaId).innerHTML = `<div id="camera-area">${html}</div>`;
       }
-      navigator.mediaDevices.getUserMedia({video:true}).then(stream=>{
+      navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(stream=>{
         cameraStream = stream;
         const video = document.getElementById("camera-video");
         video.srcObject = stream;
@@ -395,7 +407,6 @@
       closeCamera();
     }
 
-    // Backup
     function exportData() {
       const data = {books,log};
       const blob = new Blob([JSON.stringify(data)], {type:"application/json"});
@@ -436,12 +447,11 @@
       localStorage.books = JSON.stringify(books);
       localStorage.log = JSON.stringify(log);
     }
-
     function updateLog() {
       document.getElementById("log-output").innerText = log.slice(-30).join("\n");
     }
 
-    // QR Suche (Bugfix: nur scannen wenn Kamera bereit)
+    // QR Suche
     function showQRModal() {
       let html = `<video id="qr-video" style="width:260px; border-radius:12px;"></video><br>
       <button onclick="closeQRModal()">Abbrechen</button>
