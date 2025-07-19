@@ -139,15 +139,40 @@
   </div>
 
   <script>
-    // ... Service Worker und Datenbank Initialisierung wie vorher ...
+    // Datenbank, Service Worker, Variablen wie gehabt ...
 
-    // ... Alle bisherigen Funktionen wie vorher ...
+    let db;
+    const dbName = 'KindergartenBibliothek';
+    const dbVersion = 1;
+    let books = [];
+    let log = [];
+    let adminMode = false;
+    let currentPage = 1;
+    const booksPerPage = 30;
 
-    // Ergänzt: Modal für Bild & Beschreibung
+    const groups = [
+      {name:"Sterne", symbol:"⭐️"},
+      {name:"Sonne", symbol:"☀️"},
+      {name:"Mond", symbol:"🌙"},
+      {name:"Regenbogen", symbol:"🌈"},
+      {name:"Regentropfen", symbol:"💧"},
+      {name:"Schneeflocken", symbol:"❄️"},
+      {name:"Sprachförderung", symbol:"🗣️"}
+    ];
+
+    let stream;
+    let qrScannerActive = false;
+    let qrScanInterval;
+
+    // ... Service Worker und IndexedDB-Initialisierung wie gehabt ...
+
+    // Bild-Modal & Beschreibung
     function showImageModal(index) {
       const book = books[index];
-      let modalHtml = `<div style="text-align:center;">
-        <img src="${book.img}" style="max-width:90vw;max-height:60vh;border-radius:10px;box-shadow:0 0 16px #999;"><br><br>`;
+      let modalHtml = `<div style="text-align:center;">`;
+      if (book.img && book.img.length > 0) {
+        modalHtml += `<img src="${book.img}" style="max-width:90vw;max-height:60vh;border-radius:10px;box-shadow:0 0 16px #999;"><br><br>`;
+      }
       if (adminMode) {
         modalHtml += `
           <textarea id="book-desc" style="width:90%;height:80px;padding:8px;border-radius:7px;" placeholder="Beschreibung eingeben...">${book.description || ''}</textarea><br>
@@ -169,11 +194,7 @@
       renderNewBooks();
     }
 
-    // ... In Buchdaten beim Hinzufügen/Bearbeiten: description mitschreiben ...
-    // Beim Hinzufügen:
-    books.push({id, title, category: cat, keywords: keys, age, status: "verfügbar", group: "", img:"", borrower: "", borrowDate: "", isNew:false, newSince:"", description:""});
-
-    // ... In renderNewBooks(): Bild anzeigen und klickbar ...
+    // Anzeige "Neue Bücher" mit Bild & klickbar!
     function renderNewBooks() {
       const container = document.getElementById("new-books");
       const now = Date.now();
@@ -203,7 +224,7 @@
             ${newBooks.map(b => `
               <div style="width:140px;text-align:center;">
                 <div>
-                  ${b.img ? `<img src="${b.img}" style="width:70px;height:100px;object-fit:cover;border-radius:6px;border:1px solid #e6b;box-shadow:0 0 6px #ccc;cursor:pointer;" onclick="showImageModal(${books.indexOf(b)})">` : ""}
+                  ${b.img && b.img.length > 0 ? `<img src="${b.img}" style="width:70px;height:100px;object-fit:cover;border-radius:6px;border:1px solid #e6b;box-shadow:0 0 6px #ccc;cursor:pointer;" onclick="showImageModal(${books.indexOf(b)})">` : ""}
                 </div>
                 <div style="margin:5px 0 0 0;font-size:15px;">
                   ${b.id} – ${b.title}
@@ -216,7 +237,41 @@
       `;
     }
 
-    // ... Rest wie vorher ...
+    // ... alle weiteren Funktionen wie gehabt, z.B. renderBooks, Admin, QR-Scan, etc. ...
+
+    // Beispiel: Beim Hinzufügen immer description mitgeben!
+    function addBook() {
+      const id = document.getElementById("new-id").value.trim();
+      const title = document.getElementById("new-title").value.trim();
+      const cat = document.getElementById("new-cat").value.trim();
+      const keys = document.getElementById("new-keywords").value.trim();
+      const age = document.getElementById("new-age").value.trim();
+      if (!id || !title) return alert("Bitte ID und Titel angeben");
+      books.push({id, title, category: cat, keywords: keys, age, status: "verfügbar", group: "", img:"", borrower: "", borrowDate: "", isNew:false, newSince:"", description:""});
+      log.push(`${new Date().toLocaleString()}: ${id} hinzugefügt`);
+      saveData();
+      currentPage = 1;
+      renderBooks(document.getElementById("search").value);
+      renderNewBooks();
+      updateLog();
+      document.getElementById("new-id").value = "";
+      document.getElementById("new-title").value = "";
+      document.getElementById("new-cat").value = "";
+      document.getElementById("new-keywords").value = "";
+      document.getElementById("new-age").value = "";
+    }
+
+    // ... Stelle sicher, dass renderNewBooks() nach jedem renderBooks() aufgerufen wird!
+    // z.B. nach jeder Änderung:
+    document.getElementById("search").addEventListener("input", function(e) {
+      currentPage = 1;
+      renderBooks(e.target.value);
+      renderNewBooks();
+    });
+
+    // ... Initiales Rendering ...
+    renderBooks();
+    renderNewBooks();
 
   </script>
 </body>
