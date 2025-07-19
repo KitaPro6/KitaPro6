@@ -2,64 +2,108 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Demo Kindergarten-Bibliothek</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kindergarten-Bibliothek</title>
   <style>
-    body { font-family: sans-serif; background: #f6f6ff; }
-    .hidden { display: none; }
+    body { font-family: sans-serif; background: #f6f6ff; margin:0; padding:25px;}
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .search-container { display: flex; align-items: center; gap: 8px; flex: 1; max-width: 450px; }
+    #search { flex: 1; font-size: 1em; padding: 8px; border: 2px solid #ddd; border-radius: 6px; }
+    .clear-search-button, .show-all-button, .admin-corner button, button { font-size: 1em; padding: 6px 12px; border-radius: 6px; cursor: pointer; margin: 2px;}
+    .admin-corner { display: flex; flex-direction: column; gap: 5px; }
+    .book { background: #fff; margin: 10px 0; padding: 12px; border-radius: 7px; box-shadow: 0 0 6px #ccc; min-height: 115px; display: flex; align-items: flex-start; }
+    .cover { max-width: 70px; max-height: 100px; margin-right: 12px; margin-bottom: 6px; border: 1px solid #eee; border-radius: 3px;}
+    .book-details { flex:1; }
     .neu-badge { color: #e88; background: #fff4ee; border-radius: 6px; font-weight: bold; font-size: 13px; margin-left: 8px; padding: 1px 6px; border: 1px solid #e6b; vertical-align: middle; }
+    #modal { display: none; position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 10;}
+    #modal-content { background: #fff; padding: 30px; border-radius: 10px; min-width: 320px; max-width: 90vw; max-height: 90vh; overflow: auto; }
+    #admin-login {margin-top:10px;}
+    #admin-login.hidden, #admin-panel.hidden { display: none; }
+    #book-list {margin-top:20px;}
+    #new-books {margin-top:0; margin-bottom:10px;}
+    @media (max-width: 768px) {
+      body { padding: 15px; }
+      .header { flex-direction: column; gap: 15px; align-items: stretch; }
+      .search-container { max-width: 100%; }
+      .admin-corner { flex-direction: row; justify-content: center; }
+      #new-books {font-size: 15px;}
+      .book { flex-direction: column; }
+      .cover { margin-bottom: 10px; }
+    }
   </style>
 </head>
 <body>
-  <h1>📚 Kindergarten-Bibliothek</h1>
-  <button onclick="showAdminLogin()">🔑 Admin</button>
-  <div id="admin-login" class="hidden">
-    <input type="password" id="admin-pw" placeholder="Passwort">
-    <button onclick="checkAdmin()">Login</button>
+  <div class="header">
+    <div>
+      <h1>📚 Kindergarten-Bibliothek</h1>
+      <div class="search-container">
+        <input type="text" id="search" placeholder="Suchen ..." autocomplete="off">
+        <button class="clear-search-button" onclick="clearSearch()" title="Suchfeld leeren">✖️</button>
+        <button class="show-all-button" onclick="showAllBooks()" title="Alle anzeigen">Alle anzeigen</button>
+      </div>
+      <div id="new-books"></div>
+    </div>
+    <div class="admin-corner">
+      <button onclick="showAdminLogin()">🔑 Admin</button>
+      <div id="admin-login" class="hidden">
+        <input type="password" id="admin-pw" placeholder="Passwort" style="width: 120px;">
+        <button onclick="checkAdmin()">Login</button>
+      </div>
+    </div>
   </div>
+  <div id="book-list"></div>
+
+  <div id="modal"><div id="modal-content"></div></div>
+
   <div id="admin-panel" class="hidden">
+    <h3>Buch hinzufügen</h3>
+    <input id="new-id" placeholder="ID (z.B. B-0003)">
+    <input id="new-title" placeholder="Titel">
+    <input id="new-cat" placeholder="Kategorie">
+    <input id="new-keywords" placeholder="Schlagworte">
+    <input id="new-age" placeholder="Alter (z.B. 3-6)">
+    <input id="new-img" placeholder="Bild-URL (optional)">
+    <button onclick="addBook()">➕ Hinzufügen</button>
     <button onclick="logoutAdmin()">Logout</button>
   </div>
-  <div id="new-books"></div>
-  <div id="modal" class="hidden">
-    <div id="modal-content"></div>
-  </div>
+
   <script>
+    // Demo-Bücher, du kannst mit Admin neue hinzufügen!
     let books = [
-      {
-        id: "B-100",
-        title: "Das neue Märchenbuch",
-        isNew: true,
-        newSince: new Date().toISOString(),
-        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/The_Great_Gatsby_cover_1925_%281%29.jpg/200px-The_Great_Gatsby_cover_1925_%281%29.jpg",
-        description: "Ein schönes Buch über Fantasie.",
-      }
+      {id:"B-001", title:"Märchenwald", category:"Bilderbuch", keywords:"Wald, Tiere", status:"verfügbar", age:"3-6", group:"", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/The_Great_Gatsby_cover_1925_%281%29.jpg/200px-The_Great_Gatsby_cover_1925_%281%29.jpg", borrower:"", borrowDate:"", isNew:true, newSince:new Date(Date.now()-5*24*60*60*1000).toISOString(), description:"Ein Buch über den Wald."},
+      {id:"B-002", title:"Ritter und Drachen", category:"Sachbuch", keywords:"Ritter, Drachen", status:"verfügbar", age:"5-8", group:"", img:"", borrower:"", borrowDate:"", isNew:false, newSince:"", description:""}
     ];
     let adminMode = false;
 
-    function showAdminLogin() {
-      document.getElementById("admin-login").classList.remove("hidden");
-      document.getElementById("admin-panel").classList.add("hidden");
-      adminMode = false;
-    }
-    function checkAdmin() {
-      const pw = document.getElementById("admin-pw").value;
-      if (pw === "Märchenschloss2025") {
-        adminMode = true;
-        document.getElementById("admin-login").classList.add("hidden");
-        document.getElementById("admin-panel").classList.remove("hidden");
-        renderNewBooks();
-      } else {
-        alert("❌ Falsches Passwort");
-        document.getElementById("admin-pw").value = "";
-      }
-    }
-    function logoutAdmin() {
-      adminMode = false;
-      document.getElementById("admin-login").classList.remove("hidden");
-      document.getElementById("admin-panel").classList.add("hidden");
-      renderNewBooks();
+    function renderBooks(filter = "") {
+      let html = "";
+      books.forEach((book, idx) => {
+        let show = true;
+        if (filter) {
+          show = Object.values(book).some(v => typeof v==="string" && v.toLowerCase().includes(filter.toLowerCase()));
+        }
+        if (!show) return;
+        let neuHtml = "";
+        const now = Date.now();
+        if (book.isNew && book.newSince && (now - new Date(book.newSince).getTime() <= 6*7*24*60*60*1000)) {
+          neuHtml = `<span class="neu-badge">Neu!</span>`;
+        }
+        html += `<div class="book">
+            ${book.img && book.img.length>0 ? `<img src="${book.img}" class="cover" onclick="showImageModal(${idx})" style="cursor:pointer;">` : ""}
+            <div class="book-details">
+              <strong>${book.id} – ${book.title} ${neuHtml}</strong><br>
+              Kategorie: ${book.category}<br>
+              Schlagworte: ${book.keywords}<br>
+              Alter: ${book.age}<br>
+              Status: ${book.status}<br>
+              <button onclick="showImageModal(${idx})">Bild/Beschreibung</button>
+            </div>
+          </div>`;
+      });
+      document.getElementById("book-list").innerHTML = html || "<p>Keine Bücher gefunden.</p>";
     }
 
+    // *** NEUE BÜCHER ANZEIGE WIE IN DER DEMO ***
     function renderNewBooks() {
       const container = document.getElementById("new-books");
       const now = Date.now();
@@ -86,7 +130,7 @@
             ${newBooks.map(b => `
               <div style="width:140px;text-align:center;">
                 <div>
-                  ${b.img ? `<img src="${b.img}" style="width:70px;height:100px;object-fit:cover;border-radius:6px; border:1px solid #e6b;cursor:pointer;" onclick="showImageModal(0)">` : ""}
+                  ${b.img ? `<img src="${b.img}" style="width:70px;height:100px;object-fit:cover;border-radius:6px; border:1px solid #e6b;cursor:pointer;" onclick="showImageModal(${books.indexOf(b)})">` : ""}
                 </div>
                 <div style="margin:5px 0 0 0;font-size:15px;">
                   ${b.id} – ${b.title}
@@ -102,7 +146,7 @@
     function showImageModal(index) {
       const book = books[index];
       let modalHtml = `<div style="text-align:center;">`;
-      if (book.img) {
+      if (book.img && book.img.length > 0) {
         modalHtml += `<img src="${book.img}" style="max-width:90vw;max-height:60vh;border-radius:10px;box-shadow:0 0 16px #999;"><br><br>`;
       }
       if (adminMode) {
@@ -115,18 +159,80 @@
       }
       modalHtml += `<br><button onclick="closeModal()">Schließen</button></div>`;
       document.getElementById("modal-content").innerHTML = modalHtml;
-      document.getElementById("modal").classList.remove("hidden");
+      document.getElementById("modal").style.display = "flex";
     }
     function saveDescription(index) {
       books[index].description = document.getElementById("book-desc").value;
       closeModal();
+      renderBooks(document.getElementById("search").value);
       renderNewBooks();
     }
     function closeModal() {
-      document.getElementById("modal").classList.add("hidden");
+      document.getElementById("modal").style.display = "none";
     }
 
+    function showAdminLogin() {
+      document.getElementById("admin-login").classList.remove("hidden");
+      document.getElementById("admin-panel").classList.add("hidden");
+      adminMode = false;
+    }
+    function checkAdmin() {
+      const pw = document.getElementById("admin-pw").value;
+      if (pw === "Märchenschloss2025") {
+        adminMode = true;
+        document.getElementById("admin-login").classList.add("hidden");
+        document.getElementById("admin-panel").classList.remove("hidden");
+        renderBooks(document.getElementById("search").value);
+        renderNewBooks();
+      } else {
+        alert("❌ Falsches Passwort");
+        document.getElementById("admin-pw").value = "";
+      }
+    }
+    function logoutAdmin() {
+      adminMode = false;
+      document.getElementById("admin-login").classList.remove("hidden");
+      document.getElementById("admin-panel").classList.add("hidden");
+      renderBooks(document.getElementById("search").value);
+      renderNewBooks();
+    }
+    function addBook() {
+      const id = document.getElementById("new-id").value.trim();
+      const title = document.getElementById("new-title").value.trim();
+      const cat = document.getElementById("new-cat").value.trim();
+      const keys = document.getElementById("new-keywords").value.trim();
+      const age = document.getElementById("new-age").value.trim();
+      const img = document.getElementById("new-img").value.trim();
+      if (!id || !title) return alert("Bitte ID und Titel angeben");
+      books.push({
+        id, title, category: cat, keywords: keys, age, status: "verfügbar", group: "",
+        img, borrower: "", borrowDate: "", isNew:true, newSince:new Date().toISOString(), description:""
+      });
+      renderBooks(document.getElementById("search").value);
+      renderNewBooks();
+      document.getElementById("new-id").value = "";
+      document.getElementById("new-title").value = "";
+      document.getElementById("new-cat").value = "";
+      document.getElementById("new-keywords").value = "";
+      document.getElementById("new-age").value = "";
+      document.getElementById("new-img").value = "";
+    }
+    function clearSearch() {
+      document.getElementById("search").value = "";
+      renderBooks();
+      renderNewBooks();
+    }
+    function showAllBooks() {
+      document.getElementById("search").value = "";
+      renderBooks();
+      renderNewBooks();
+    }
+    document.getElementById("search").addEventListener("input", function(e) {
+      renderBooks(e.target.value);
+      renderNewBooks();
+    });
     // Initiales Rendering
+    renderBooks();
     renderNewBooks();
   </script>
 </body>
