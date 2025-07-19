@@ -77,6 +77,7 @@
     #log-pagination {margin-bottom: 8px; text-align: right;}
     #backup-section {margin-top:32px; margin-bottom:24px; background:#fff; border-radius:14px; box-shadow:0 2px 12px #007aff16; padding:18px;}
     #backup-section.hidden {display: none;}
+    #verliehen-uebersicht.hidden {display: none;}
     .backup-btn {margin:4px; padding:8px 16px; border-radius:8px; border:1px solid #b6d8ff; background:#eaf3ff; color:#007aff; cursor:pointer;}
     .backup-btn:hover {background:#b6d8ff;}
     .camera-btn {margin-left:8px; background:#eaf3ff; color:#007aff; border:none; border-radius:7px; padding:6px 12px;}
@@ -748,6 +749,7 @@ function renderBooks(searchVal="") {
     renderBooks();
     renderNewBooks();
     updateLog();
+    renderVerliehenUebersicht();
   </script>
 </body>
 </html>    
