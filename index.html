@@ -5,19 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kindergarten Bibliothek</title>
   <style>
-    .neu-label {
+    .book {
+  position: relative;
+}
+
+.cover {
+  display: block;
+  width: 100px; /* oder deine Wunschgröße */
+  height: auto;
+  border-radius: 8px;
+}
+
+.neu-label {
   position: absolute;
-  top: 8px;
-  right: 12px;
+  top: 12px;      /* Abstand von oben am Bild */
+  right: 22px;    /* Abstand von rechts am Bild */
   font-size: 1em;
-  color: #ffd600;      /* kräftiges Gelb */
+  color: #ffd600;
   font-weight: bold;
   background: none;
   padding: 0;
   border-radius: 0;
-  opacity: 0.9;
+  opacity: 0.93;
   letter-spacing: 0.5px;
   z-index: 2;
+  pointer-events: none;
 }
 }
     .hidden { display: none !important; }
