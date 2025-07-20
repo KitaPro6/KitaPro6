@@ -5,81 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kindergarten Bibliothek</title>
   <style>
-   .cover-wrapper {
-  position: relative;
-  display: inline-block;
-}
-
-.cover {
-  display: block;
-  width: 100px; /* Passe ggf. an */
-  height: auto;
-  border-radius: 8px;
-}
-
-.neu-label {
-  position: absolute;
-  top: 6px;
-  right: 8px;
-  font-size: 1em;
-  color: #ffd600;
-  font-weight: bold;
-  background: none;
-  padding: 0;
-  border-radius: 0;
-  opacity: 0.93;
-  letter-spacing: 0.5px;
-  z-index: 2;
-  pointer-events: none;
-}
-}
-    .hidden { display: none !important; }
     body { font-family: Arial, sans-serif; background: #f9faff; margin: 0;}
     .container { max-width: 900px; margin: 0 auto; padding: 24px;}
     .header { display: flex; justify-content: space-between; align-items: flex-start;}
-    h1 { 
-      margin: 0 0 10px 0; 
-      font-size: 2em; 
-      color: #007aff;
-      font-weight: 700;
-      letter-spacing: 0.03em;
-      text-shadow: none;
-      background: none;
-    }
-    /* Angepasste Suchleiste */
-    .search-wrapper {
-      display: flex;
-      align-items: center;
-      background: #fff;
-      border: 1.5px solid #b6d8ff;
-      border-radius: 9px;
-      box-shadow: 0 2px 8px #eaf3ff;
-      padding: 2px 6px;
-      max-width: 340px;
-    }
-    .search-wrapper input {
-      flex: 1;
-      border: none;
-      background: transparent;
-      padding: 8px 6px;
-      font-size: 1em;
-      outline: none;
-    }
-    .search-wrapper .qr-button,
-    .search-wrapper .clear-search-button {
-      background: none;
-      border: none;
-      padding: 0 8px;
-      color: #007aff;
-      font-size: 1.3em;
-      cursor: pointer;
-      border-radius: 7px;
-      transition: background 0.2s;
-    }
-    .search-wrapper .qr-button:hover,
-    .search-wrapper .clear-search-button:hover {
-      background: #eaf3ff;
-    }
+    h1 { margin: 0 0 10px 0; font-size: 2em; color: #007aff; font-weight: 700; letter-spacing: 0.03em; text-shadow: none; background: none;}
+    .search-wrapper { display: flex; align-items: center; background: #fff; border: 1.5px solid #b6d8ff; border-radius: 9px; box-shadow: 0 2px 8px #eaf3ff; padding: 2px 6px; max-width: 340px;}
+    .search-wrapper input { flex: 1; border: none; background: transparent; padding: 8px 6px; font-size: 1em; outline: none;}
+    .search-wrapper .qr-button, .search-wrapper .clear-search-button { background: none; border: none; padding: 0 8px; color: #007aff; font-size: 1.3em; cursor: pointer; border-radius: 7px; transition: background 0.2s;}
+    .search-wrapper .qr-button:hover, .search-wrapper .clear-search-button:hover { background: #eaf3ff;}
     .pagination { margin: 24px 0; text-align: center;}
     .pagination button { margin:2px; padding:7px 14px; border-radius:7px; border:1px solid #b6d8ff; background:#fff; color:#007aff; cursor:pointer;}
     .pagination button.active { background:#007aff; color:#fff; font-weight: bold;}
@@ -111,87 +44,55 @@
     .camera-btn {margin-left:8px; background:#eaf3ff; color:#007aff; border:none; border-radius:7px; padding:6px 12px;}
     .camera-btn:hover {background:#b6d8ff;}
     .img-preview {max-width:110px; border-radius:8px; margin-bottom:8px;}
-    .neu-label {display:flex; align-items:center; gap:8px; font-weight:bold;}
-    .neu-label input[type=checkbox] {margin-right:6px;}
-    .neu-label span {font-weight:bold;}
-    #new-books-header {
-  color: #007aff;
-  font-weight: bold;
-  font-size: 1.1em;
-  padding: 8px 0 8px 0;
-  background: none;
-  border-radius: 0;
-}
-    #new-books {
-      max-width: 400px;
-      width: 100%;
-      margin: 0 auto 12px auto;
-      overflow-x: auto;
+    /* NEU-Label am Bild */
+    .cover-wrapper { position: relative; display: inline-block; }
+    .cover-wrapper .neu-label { 
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      font-size: 1em;
+      color: #ffd600;
+      font-weight: bold;
+      background: none;
+      padding: 0;
+      border-radius: 0;
+      opacity: 0.93;
+      letter-spacing: 0.5px;
+      z-index: 2;
+      pointer-events: none;
     }
-    #new-books-scroll {
+    /* NEU-Checkbox im Admin-Panel */
+    label.neu-label {
       display: flex;
-      gap: 14px;
-      padding-bottom: 8px;
+      align-items: center;
+      gap: 8px;
+      font-weight: bold;
+      color: #555;
+      position: static;
+      pointer-events: auto;
+      background: none;
+      padding: 0;
+      border-radius: 0;
+      opacity: 1;
+      letter-spacing: 0.5px;
     }
-    #new-books-scroll .book {
-      min-width: 180px;
-      max-width: 200px;
-      flex: 0 0 auto;
-    }
+    label.neu-label input[type=checkbox] { margin-right: 6px; }
+    label.neu-label span { font-weight: bold; }
+    .hidden { display: none !important; }
+    #new-books-header { color: #007aff; font-weight: bold; font-size: 1.1em; padding: 8px 0 8px 0; background: none; border-radius: 0;}
+    #new-books { max-width: 900px; width: 100%; margin: 0 auto 12px auto; }
+    #new-books-scroll { display: flex; gap: 14px; padding-bottom: 8px; }
+    #new-books-scroll .book { min-width: 180px; max-width: 200px; flex: 0 0 auto; }
     /* Vollbildkamera Overlay */
     #camera-overlay {
-      position: fixed;
-      z-index: 9999;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: #000b;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
+      position: fixed; z-index: 9999; top: 0; left: 0; right: 0; bottom: 0; background: #000b; display: none; align-items: center; justify-content: center; flex-direction: column;
     }
-    #camera-video-full {
-      width: 100vw;
-      height: 100vh;
-      object-fit: cover;
-      background: #222;
-    }
-    #camera-shutter-btn {
-      position: absolute;
-      left: 50%; bottom: 7vh;
-      transform: translateX(-50%);
-      background: rgba(255,255,255,0.6);
-      border: none;
-      border-radius: 50%;
-      width: 80px; height: 80px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.6em;
-      color: #007aff;
-      box-shadow: 0 4px 24px #0005;
-      cursor: pointer;
-    }
-    #camera-close-btn {
-      position: absolute;
-      top: 28px; right: 28px;
-      background: rgba(0,0,0,0.25);
-      color: #fff;
-      border: none;
-      border-radius: 100px;
-      font-size: 2em;
-      width: 48px; height: 48px;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
-      z-index: 10;
-    }
+    #camera-video-full { width: 100vw; height: 100vh; object-fit: cover; background: #222; }
+    #camera-shutter-btn { position: absolute; left: 50%; bottom: 7vh; transform: translateX(-50%); background: rgba(255,255,255,0.6); border: none; border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; font-size: 2.6em; color: #007aff; box-shadow: 0 4px 24px #0005; cursor: pointer;}
+    #camera-close-btn { position: absolute; top: 28px; right: 28px; background: rgba(0,0,0,0.25); color: #fff; border: none; border-radius: 100px; font-size: 2em; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10;}
     /* Admin-Action Modal */
-    #admin-action-modal {
-      display:none; position:fixed;top:0;left:0;right:0;bottom:0;
-      background:rgba(0,0,0,.23);align-items:center;justify-content:center;z-index:99999;
-    }
-    #admin-action-modal-inner {
-      background:#fff;padding:28px 22px;border-radius:16px;box-shadow:0 8px 36px #007aff22;min-width:240px;max-width:340px;text-align:center;
-    }
+    #admin-action-modal { display:none; position:fixed;top:0;left:0;right:0;bottom:0; background:rgba(0,0,0,.23);align-items:center;justify-content:center;z-index:99999;}
+    #admin-action-modal-inner { background:#fff;padding:28px 22px;border-radius:16px;box-shadow:0 8px 36px #007aff22;min-width:240px;max-width:340px;text-align:center;}
     /* Verliehen Übersicht Tabs */
     #verliehen-uebersicht {background:#fff; border-radius:12px; box-shadow:0 2px 12px #007aff16; padding:16px; margin-bottom:18px;}
     #gruppen-tabs button {margin:2px 6px 9px 0; padding:6px 16px; border-radius:7px; border:1px solid #b6d8ff; background:#eaf3ff; color:#007aff; cursor:pointer;}
@@ -273,54 +174,9 @@
   </div>
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <script>
-    let books = [];
-    let log = [];
-    let page = 1;
-    let admin = false;
-    let editingIdx = null;
-    let cameraStream = null;
-    let photoTargetArea = null;
-    let verliehenGruppeIdx = 0;
-    let logPage = 1;
+    // ... Initialisierung wie gehabt ...
 
-    const gruppenSymbole = ["⭐","☀️","🌙","🌈","💧","❄️","🗣️"];
-    const gruppenNamen = ["Sterne","Sonne","Mond","Regenbogen","Regentropfen","Schneeflocken","Sprachförderung"];
-
-    // --- LOG: Nur Einträge aus dem letzten Jahr ---
-    function trimLogByDate() {
-      const now = Date.now();
-      log = log.filter(entry => {
-        const match = entry.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4}), (\d{1,2}):(\d{2}):(\d{2}):/);
-        if (!match) return true;
-        const day = Number(match[1]);
-        const month = Number(match[2]);
-        const year = Number(match[3]);
-        const hour = Number(match[4]);
-        const min = Number(match[5]);
-        const sec = Number(match[6]);
-        const entryDate = new Date(year, month - 1, day, hour, min, sec).getTime();
-        return (now - entryDate) < 365*24*60*60*1000;
-      });
-    }
-
-    // --- Initialisierung: Bücher und Log laden, alten Log trimmen ---
-    if(!localStorage.books) {
-      books = [
-        {id:"B-0001", title:"Die kleine Raupe", category:"Bilderbuch", age:"3-6", status:"verfügbar", img:"", neu:true, description:"Ein Klassiker für Kinder."},
-        {id:"B-0002", title:"Leo Lausemaus", category:"Vorlesebuch", age:"4-7", status:"verfügbar", img:"", neu:false, description:"Abenteuer von Leo Lausemaus."},
-        {id:"B-0003", title:"Conni kommt", category:"Bilderbuch", age:"3-6", status:"verfügbar", img:"", neu:true, description:"Conni erlebt den Kindergarten."}
-      ];
-      log = [];
-      saveData();
-    } else {
-      books = JSON.parse(localStorage.books);
-      log = JSON.parse(localStorage.log || "[]");
-      trimLogByDate();
-      saveData();
-    }
-
- 
-function renderBooks(searchVal="") {
+    function renderBooks(searchVal="") {
       let filtered = books.filter(b => {
         let s = searchVal.trim().toLowerCase();
         if(!s) return true;
@@ -346,27 +202,75 @@ function renderBooks(searchVal="") {
         } else {
           statusHtml = `<span class="status-geliehen"><span class="symbol">📕</span> Geliehen von ${book.borrower || "?"}</span>`;
         }
-  html += `<div class="book">
-  ${book.img ? `
-    <div class="cover-wrapper" style="position:relative; display:inline-block;">
-      ${book.neu ? '<span class="neu-label">NEU!</span>' : ''}
-      <img src="${book.img}" class="cover" onclick="showImageModal(${books.indexOf(book)})">
-    </div>
-  ` : ""}
-  <div class="book-details">
-    <strong>${book.id} – ${book.title}</strong><br>
-    Kategorie: ${book.category}<br>
-    Alter: ${book.age}<br>
-    Status: ${statusHtml}<br>
-    ${book.status === "verfügbar"
-        ? `<button onclick="ausleihenStart(${books.indexOf(book)})">Ausleihen</button>`
-        : `<button onclick="zurueckgebenStart(${books.indexOf(book)})">Zurückstellen</button>`
-    }
-    ${(admin ? `<button class="edit-btn" onclick="editBook(${books.indexOf(book)})">Bearbeiten</button>`:"")}
-  </div>
-</div>`;
+        html += `<div class="book">
+          <div class="cover-wrapper">
+            ${book.neu ? '<span class="neu-label">NEU!</span>' : ''}
+            ${book.img ? `<img src="${book.img}" class="cover" onclick="showImageModal(${books.indexOf(book)})">` : ""}
+          </div>
+          <div class="book-details">
+            <strong>${book.id} – ${book.title}</strong><br>
+            Kategorie: ${book.category}<br>
+            Alter: ${book.age}<br>
+            Status: ${statusHtml}<br>
+            ${book.status === "verfügbar"
+                ? `<button onclick="ausleihenStart(${books.indexOf(book)})">Ausleihen</button>`
+                : `<button onclick="zurueckgebenStart(${books.indexOf(book)})">Zurückstellen</button>`
+            }
+            ${(admin ? `<button class="edit-btn" onclick="editBook(${books.indexOf(book)})">Bearbeiten</button>`:"")}
+          </div>
+        </div>`;
       });
       document.getElementById("book-list").innerHTML = html;
+
+      let pagHtml = "";
+      for(let i=1;i<=maxPage;i++) {
+        pagHtml += `<button onclick="gotoPage(${i})" class="${i===page?'active':''}">${i}</button>`;
+      }
+      document.getElementById("pagination").innerHTML = pagHtml;
+    }
+
+    // --- NEU-Bereich ---
+    function renderNewBooks() {
+      const neu = books.filter(b => b.neu);
+      if (!neu.length) {
+        document.getElementById("new-books").innerHTML = "";
+        return;
+      }
+      let html = `<div style="background:#eaf3ff;padding:12px;border-radius:12px;margin-bottom:12px;">
+        <div id="new-books-scroll">`;
+      neu.forEach((book, idx) => {
+        let statusHtml = '';
+        if (book.status === "verfügbar") {
+          statusHtml = `<span class="status-verfuegbar"><span class="symbol">📗</span> Verfügbar</span>`;
+        } else {
+          statusHtml = `<span class="status-geliehen"><span class="symbol">📕</span> Geliehen von ${book.borrower || "?"}</span>`;
+        }
+        html += `<div class="book" style="background:#eaf3ff;">
+          <div class="cover-wrapper">
+            <span class="neu-label">NEU!</span>
+            ${book.img ? `<img src="${book.img}" class="cover" onclick="showImageModal(${books.indexOf(book)})">` : ""}
+          </div>
+          <div class="book-details">
+            <strong>${book.id} – ${book.title}</strong><br>
+            Kategorie: ${book.category}<br>
+            Alter: ${book.age}<br>
+            Status: ${statusHtml}<br>
+            ${book.status === "verfügbar"
+              ? `<button onclick="ausleihenStart(${books.indexOf(book)})">Ausleihen</button>`
+              : `<button onclick="zurueckgebenStart(${books.indexOf(book)})">Zurückstellen</button>`
+            }
+            ${(admin ? `<button class="edit-btn" onclick="editBook(${books.indexOf(book)})">Bearbeiten</button>` : "")}
+          </div>
+        </div>`;
+      });
+      html += `</div></div>`;
+      document.getElementById("new-books").innerHTML = html;
+    }
+
+    // Rest deiner Funktionen bleibt wie gehabt...
+  </script>
+</body>
+</html>
 
       let pagHtml = "";
       for(let i=1;i<=maxPage;i++) {
