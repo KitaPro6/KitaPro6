@@ -345,24 +345,22 @@ function renderBooks(searchVal="") {
 
     // --- NEU-Bereich mit blauem Hintergrund ---
    function renderNewBooks() {
-  const neu = books.filter(b=>b.neu);
-  if(!neu.length) { document.getElementById("new-books").innerHTML = ""; return;}
-  
-  let html = `
-    <div id="new-books-header">
-      <strong>Neue Bücher:</strong>
-    </div>
-    <div style="background:#eaf3ff;padding:12px;border-radius:12px;margin-bottom:12px;">
-      <div id="new-books-scroll">
-  `;
-  neu.forEach((book,idx)=>{
+  const neu = books.filter(b => b.neu);
+  if (!neu.length) {
+    document.getElementById("new-books").innerHTML = "";
+    return;
+  }
+  let html = `<div style="background:#eaf3ff;padding:12px;border-radius:12px;margin-bottom:12px;">
+    <div id="new-books-scroll">`;
+  neu.forEach((book, idx) => {
     let statusHtml = '';
-    if(book.status === "verfügbar"){
+    if (book.status === "verfügbar") {
       statusHtml = `<span class="status-verfuegbar"><span class="symbol">📗</span> Verfügbar</span>`;
     } else {
       statusHtml = `<span class="status-geliehen"><span class="symbol">📕</span> Geliehen von ${book.borrower || "?"}</span>`;
     }
     html += `<div class="book" style="background:#eaf3ff;">
+        <div class="neu-label">NEU!</div>
         ${book.img ? `<img src="${book.img}" class="cover" onclick="showImageModal(${books.indexOf(book)})">` : ""}
         <div class="book-details">
           <strong>${book.id} – ${book.title}</strong><br>
@@ -370,17 +368,14 @@ function renderBooks(searchVal="") {
           Alter: ${book.age}<br>
           Status: ${statusHtml}<br>
           ${book.status === "verfügbar"
-              ? `<button onclick="ausleihenStart(${books.indexOf(book)})">Ausleihen</button>`
-              : `<button onclick="zurueckgebenStart(${books.indexOf(book)})">Zurückstellen</button>`
+            ? `<button onclick="ausleihenStart(${books.indexOf(book)})">Ausleihen</button>`
+            : `<button onclick="zurueckgebenStart(${books.indexOf(book)})">Zurückstellen</button>`
           }
-          ${(admin ? `<button class="edit-btn" onclick="editBook(${books.indexOf(book)})">Bearbeiten</button>`:"")}
+          ${(admin ? `<button class="edit-btn" onclick="editBook(${books.indexOf(book)})">Bearbeiten</button>` : "")}
         </div>
       </div>`;
   });
-  html += `
-      </div>
-    </div>
-  `;
+  html += `</div></div>`;
   document.getElementById("new-books").innerHTML = html;
 }
 
