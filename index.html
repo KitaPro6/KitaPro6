@@ -346,26 +346,25 @@ function renderBooks(searchVal="") {
         } else {
           statusHtml = `<span class="status-geliehen"><span class="symbol">📕</span> Geliehen von ${book.borrower || "?"}</span>`;
         }
-   html += `
+  html += `<div class="book">
   ${book.img ? `
     <div class="cover-wrapper" style="position:relative; display:inline-block;">
       ${book.neu ? '<span class="neu-label">NEU!</span>' : ''}
       <img src="${book.img}" class="cover" onclick="showImageModal(${books.indexOf(book)})">
     </div>
   ` : ""}
-  `
-          <div class="book-details">
-            <strong>${book.id} – ${book.title}</strong><br>
-            Kategorie: ${book.category}<br>
-            Alter: ${book.age}<br>
-            Status: ${statusHtml}<br>
-            ${book.status === "verfügbar"
-                ? `<button onclick="ausleihenStart(${books.indexOf(book)})">Ausleihen</button>`
-                : `<button onclick="zurueckgebenStart(${books.indexOf(book)})">Zurückstellen</button>`
-            }
-            ${(admin ? `<button class="edit-btn" onclick="editBook(${books.indexOf(book)})">Bearbeiten</button>`:"")}
-          </div>
-        </div>`;
+  <div class="book-details">
+    <strong>${book.id} – ${book.title}</strong><br>
+    Kategorie: ${book.category}<br>
+    Alter: ${book.age}<br>
+    Status: ${statusHtml}<br>
+    ${book.status === "verfügbar"
+        ? `<button onclick="ausleihenStart(${books.indexOf(book)})">Ausleihen</button>`
+        : `<button onclick="zurueckgebenStart(${books.indexOf(book)})">Zurückstellen</button>`
+    }
+    ${(admin ? `<button class="edit-btn" onclick="editBook(${books.indexOf(book)})">Bearbeiten</button>`:"")}
+  </div>
+</div>`;
       });
       document.getElementById("book-list").innerHTML = html;
 
