@@ -466,6 +466,8 @@ function renderBooks(searchVal="") {
       document.getElementById("verliehen-uebersicht").classList.add("hidden");
       renderBooks(document.getElementById("search").value);
       renderNewBooks();
+      
+      renderVerliehenUebersicht(verliehenGruppeIdx);
     }
 
     function addBook() {
