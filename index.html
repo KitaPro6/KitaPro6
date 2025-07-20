@@ -347,8 +347,12 @@ function renderBooks(searchVal="") {
           statusHtml = `<span class="status-geliehen"><span class="symbol">📕</span> Geliehen von ${book.borrower || "?"}</span>`;
         }
         html += `
-        <div class="book">
-          ${book.img ? `<img src="${book.img}" class="cover" onclick="showImageModal(${books.indexOf(book)})">` : ""}
+       ${book.img ? `
+  <div class="cover-wrapper" style="position:relative; display:inline-block;">
+    <span class="neu-label">NEU!</span>
+    <img src="${book.img}" class="cover" onclick="showImageModal(${books.indexOf(book)})">
+  </div>
+` : ""}
           <div class="book-details">
             <strong>${book.id} – ${book.title}</strong><br>
             Kategorie: ${book.category}<br>
