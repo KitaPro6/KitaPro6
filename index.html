@@ -90,10 +90,8 @@
     #camera-video-full { width: 100vw; height: 100vh; object-fit: cover; background: #222; }
     #camera-shutter-btn { position: absolute; left: 50%; bottom: 7vh; transform: translateX(-50%); background: rgba(255,255,255,0.6); border: none; border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; font-size: 2.6em; color: #007aff; box-shadow: 0 4px 24px #0005; cursor: pointer;}
     #camera-close-btn { position: absolute; top: 28px; right: 28px; background: rgba(0,0,0,0.25); color: #fff; border: none; border-radius: 100px; font-size: 2em; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10;}
-    /* Admin-Action Modal */
     #admin-action-modal { display:none; position:fixed;top:0;left:0;right:0;bottom:0; background:rgba(0,0,0,.23);align-items:center;justify-content:center;z-index:99999;}
     #admin-action-modal-inner { background:#fff;padding:28px 22px;border-radius:16px;box-shadow:0 8px 36px #007aff22;min-width:240px;max-width:340px;text-align:center;}
-    /* Verliehen Übersicht Tabs */
     #verliehen-uebersicht {background:#fff; border-radius:12px; box-shadow:0 2px 12px #007aff16; padding:16px; margin-bottom:18px;}
     #gruppen-tabs button {margin:2px 6px 9px 0; padding:6px 16px; border-radius:7px; border:1px solid #b6d8ff; background:#eaf3ff; color:#007aff; cursor:pointer;}
     #gruppen-tabs button.active {background:#007aff; color:#fff;}
@@ -169,7 +167,19 @@
   </div>
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <script>
-    // ... Initialisierung wie gehabt ...
+    // Beispiel-Initialisierung:
+    let books = [];
+    let log = [];
+    let page = 1;
+    let admin = false;
+    let editingIdx = null;
+    let cameraStream = null;
+    let photoTargetArea = null;
+    let verliehenGruppeIdx = 0;
+    let logPage = 1;
+
+    const gruppenSymbole = ["⭐","☀️","🌙","🌈","💧","❄️","🗣️"];
+    const gruppenNamen = ["Sterne","Sonne","Mond","Regenbogen","Regentropfen","Schneeflocken","Sprachförderung"];
 
     function renderBooks(searchVal="") {
       let filtered = books.filter(b => {
@@ -261,12 +271,6 @@
       html += `</div></div>`;
       document.getElementById("new-books").innerHTML = html;
     }
-
-    // Rest deiner Funktionen bleibt wie gehabt...
-  </script>
-</body>
-</html>
-
       let pagHtml = "";
       for(let i=1;i<=maxPage;i++) {
         pagHtml += `<button onclick="gotoPage(${i})" class="${i===page?'active':''}">${i}</button>`;
@@ -689,14 +693,12 @@
       loop();
     }
 
-    // Initiales Rendern
-    renderBooks();
+     renderBooks();
     renderNewBooks();
     updateLog();
-        // Sicherstellen, dass Verliehen-Übersicht initial versteckt ist (für Nicht-Admins)
-if (!admin) {
-  document.getElementById("verliehen-uebersicht").classList.add("hidden");
-}
+    if (!admin) {
+      document.getElementById("verliehen-uebersicht").classList.add("hidden");
+    }
   </script>
 </body>
 </html>
