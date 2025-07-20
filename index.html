@@ -376,13 +376,14 @@ function renderBooks(searchVal="") {
     }
 
     // --- NEU-Bereich mit blauem Hintergrund ---
-  function renderNewBooks() {
+   function renderNewBooks() {
   const neu = books.filter(b => b.neu);
   if (!neu.length) {
     document.getElementById("new-books").innerHTML = "";
     return;
   }
-  let html = `<div id="new-books-scroll">`;
+  let html = `<div style="background:#eaf3ff;padding:12px;border-radius:12px;margin-bottom:12px;">
+    <div id="new-books-scroll">`;
   neu.forEach((book, idx) => {
     let statusHtml = '';
     if (book.status === "verfügbar") {
@@ -391,10 +392,8 @@ function renderBooks(searchVal="") {
       statusHtml = `<span class="status-geliehen"><span class="symbol">📕</span> Geliehen von ${book.borrower || "?"}</span>`;
     }
     html += `<div class="book" style="background:#eaf3ff;">
-        <div class="cover-wrapper">
-          <span class="neu-label">NEU!</span>
-          ${book.img ? `<img src="${book.img}" class="cover" onclick="showImageModal(${books.indexOf(book)})">` : ""}
-        </div>
+        <div class="neu-label">NEU!</div>
+        ${book.img ? `<img src="${book.img}" class="cover" onclick="showImageModal(${books.indexOf(book)})">` : ""}
         <div class="book-details">
           <strong>${book.id} – ${book.title}</strong><br>
           Kategorie: ${book.category}<br>
@@ -408,9 +407,8 @@ function renderBooks(searchVal="") {
         </div>
       </div>`;
   });
-  html += `</div>`;
+  html += `</div></div>`;
   document.getElementById("new-books").innerHTML = html;
-}
 }
 
     function gotoPage(p) { page = p; renderBooks(document.getElementById("search").value); }
@@ -802,4 +800,4 @@ if (!admin) {
 }
   </script>
 </body>
-</html>    
+</html>
