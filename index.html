@@ -105,7 +105,6 @@
     <div class="header">
       <div>
         <h1>📚 Kindergarten Bibliothek 📚</h1>
-        <!-- Angepasste Suchleiste -->
         <div class="search-wrapper">
           <button class="qr-button" onclick="showQRModal()" title="QR-Code scannen">📷</button>
           <input type="text" id="search" placeholder="Suchen ..." autocomplete="off" oninput="onSearchChange()">
@@ -145,14 +144,11 @@
       <div id="log-pagination"></div>
       <div id="log-output"></div>
     </div>
-    <!-- Der Bereich „Derzeit verliehen“ ist nur für Admins sichtbar.
-         Wir lassen ihn im HTML, JS blendet ihn nur bei admin=true ein. -->
     <div id="verliehen-uebersicht" class="hidden">
       <h3>Derzeit verliehen:</h3>
       <div id="gruppen-tabs"></div>
       <div id="gruppen-content"></div>
     </div>
-    <!-- Kamera-Vollbild Overlay -->
     <div id="camera-overlay">
       <video id="camera-video-full" autoplay playsinline></video>
       <button id="camera-shutter-btn" onclick="takePhotoFull()">📸</button>
@@ -161,7 +157,6 @@
         Bitte Buch hoch ins Bild halten!
       </div>
     </div>
-    <!-- Admin-Action Passwort-Modal -->
     <div id="admin-action-modal">
       <div id="admin-action-modal-inner">
         <div id="admin-action-msg"></div>
