@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Kindergarten-Bibliothek">
   <script src="jsQR.js"></script>
-  <style>
+<style>
     body { font-family: sans-serif; padding: 25px; background: #f6f6ff; margin: 0; }
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .search-container { display: flex; align-items: center; gap: 8px; flex: 1; max-width: 450px; }
@@ -92,7 +92,44 @@
       .admin-corner { flex-direction: row; justify-content: center; }
       #new-books {font-size: 15px;}
     }
-  </style>
+
+    /* --- Für iPhone 7 Plus & kleine Bildschirme --- */
+    html, body {
+      width: 100%;
+      overflow-x: hidden;
+    }
+    .container {
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+    @media (max-width: 450px) {
+      .container {
+        padding: 8px;
+      }
+      h1 {
+        font-size: 1.2em;
+      }
+      .book {
+        flex-direction: column;
+        gap: 8px;
+        padding: 7px;
+      }
+      .search-container {
+        max-width: 100%;
+      }
+      #new-books {
+        font-size: 15px;
+      }
+      .cover, .book img.cover {
+        max-width: 80vw;
+        width: 100%;
+        height: auto;
+      }
+    }
+</style>
 </head>
 <body>
   <div class="header">
