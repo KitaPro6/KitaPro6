@@ -10,233 +10,233 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Kindergarten-Bibliothek">
   <script src="jsQR.js"></script>
-  <style>
-    body { font-family: sans-serif; padding: 25px; background: #f6f6ff; margin: 0; }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .searchbar-group {
-      display: flex;
-      align-items: center;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px #e5eaff;
-      overflow: hidden;
-      border: 2px solid #bbb;
-      max-width: 450px;
-      margin-bottom: 8px;
+<style>
+  body { font-family: sans-serif; padding: 25px; background: #f6f6ff; margin: 0; }
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .searchbar-group {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px #e5eaff;
+    overflow: hidden;
+    border: 2px solid #bbb;
+    max-width: 450px;
+    margin-bottom: 8px;
+  }
+  .searchbar-group input {
+    border: none;
+    box-shadow: none;
+    outline: none;
+    flex: 1;
+    padding: 9px 8px;
+    font-size: 1em;
+    background: transparent;
+  }
+  .searchbar-group .qr-button,
+  .searchbar-group .clear-search-button {
+    border: none;
+    background: none;
+    padding: 0 13px;
+    height: 39px;
+    cursor: pointer;
+    font-size: 1.25em;
+    color: #007bff;
+    transition: background 0.13s;
+  }
+  .searchbar-group .qr-button:hover,
+  .searchbar-group .clear-search-button:hover {
+    background: #f1f6ff;
+  }
+  .show-all-button {
+    background: #007bff; color: #fff; border: none; font-size: 14px;
+    padding: 4px 10px; border-radius: 6px; cursor: pointer; margin-left: 9px;
+    transition: background 0.15s;
+  }
+  .show-all-button:hover { background: #0056b3; }
+  .book { background: #fff; margin: 10px 0; padding: 12px; border-radius: 7px; box-shadow: 0 0 6px #ccc; overflow: hidden; min-height: 115px; }
+  .cover,
+  .book img.cover {
+    width: 110px;
+    height: 165px;
+    max-width: 110px;
+    max-height: 165px;
+    object-fit: cover;
+    aspect-ratio: 2/3;
+    border-radius: 3px;
+    background: #fff;
+    display: block;
+  }
+  .book-details { overflow: hidden; }
+  .admin-controls { margin-top: 10px; }
+  .edit-fields input, .edit-fields label { margin: 2px 0; display: block; width: 90%; padding: 4px; }
+  .edit-fields textarea { margin: 2px 0; display: block; width: 95%; padding: 4px; }
+  .edit-fields.hidden { display: none; }
+  .edit-fields .neu-checkbox { width: auto; display: inline-block; margin-left: 0; margin-right: 8px; }
+  .edit-fields .neu-label { display: inline-block; width: auto; margin-right: 0; font-weight: bold; color: #e88; }
+  #modal { display: none; position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 10;}
+  #modal-content { background: #fff; padding: 30px; border-radius: 10px; min-width: 320px; max-width: 90vw; max-height: 90vh; overflow: auto; }
+  #qr-reader { width: 100%; max-width: 400px; }
+  #admin-login-panel {margin-top:10px;}
+  #admin-login-panel.hidden { display: none; }
+  #admin-panel {margin-top:10px;}
+  #admin-panel.hidden { display: none; }
+  #admin-panel input { display: block; margin: 5px 0; padding: 5px; width: 200px; }
+  #log-output {white-space: pre; font-size: 0.95em; background: #eef; padding: 10px; border-radius: 6px; max-height:150px; overflow-y:auto;}
+  #book-list {margin-top:20px;}
+  #new-books {margin-top:0; margin-bottom:10px;}
+  button {font-size:1em; padding: 6px 12px; margin: 2px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; background: #f9f9f9;}
+  button:hover { background: #e9e9e9; }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
+  .pagination-bar {text-align:center; margin:24px 0 8px 0;}
+  .pagination-btn {
+    background: #eee;
+    color: #333;
+    border: none;
+    font-size: 15px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 0 5px;
+    transition: background 0.15s;
+  }
+  .pagination-btn:hover { background: #ddd; }
+  .pagination-info { font-size: 15px; color: #444; margin: 0 10px; }
+  .neu-badge {
+    color: #e88; background: #fff4ee; border-radius: 6px; font-weight: bold;
+    font-size: 13px; margin-left: 8px; padding: 1px 6px; border: 1px solid #e6b;
+    vertical-align: middle;
+  }
+  #new-books-cards {
+    display: flex;
+    overflow-x: auto;
+    gap: 16px;
+    padding: 8px 0 8px 0;
+    margin: 0 0 10px 0;
+  }
+  .book-card {
+    background: #e3f1ff;
+    border-radius: 13px;
+    box-shadow: 0 1px 8px #b2d0fa;
+    min-width: 135px;
+    max-width: 135px;
+    flex: 0 0 135px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 8px 12px 8px;
+    position: relative;
+    cursor: pointer;
+    transition: box-shadow 0.14s;
+  }
+  .book-card:hover {
+    box-shadow: 0 2px 12px #7bb7f8;
+  }
+  .book-card-img-wrap {
+    width: 60px;
+    height: 90px;
+    max-width: 60px;
+    max-height: 90px;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .book-card-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    aspect-ratio: 2/3;
+    display: block;
+  }
+  .book-card-neu {
+    position: absolute;
+    top: 6px; right: 6px;
+    background: #ffe066;
+    color: #d88;
+    font-weight: bold;
+    font-size: 13px;
+    border-radius: 6px;
+    padding: 2px 8px;
+    box-shadow: 0 1px 2px #ccc;
+    z-index: 2;
+  }
+  .book-card-title {
+    font-size: 0.96em;
+    font-weight: bold;
+    color: #335;
+    margin-top: 7px;
+    text-align: center;
+    word-break: break-word;
+  }
+  .book-card-id {
+    font-size: 0.92em;
+    color: #447;
+    margin-top: 2px;
+    text-align: center;
+  }
+  #book-detail-modal { display:none; position:fixed; z-index:20; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); align-items:center; justify-content:center;}
+  #book-detail-modal-content { background:#fff; border-radius:14px; padding:24px; max-width:95vw; min-width:250px; max-height:90vh; box-sizing:border-box; overflow:auto; text-align:center;}
+  #book-detail-modal-content img { max-width:220px; max-height:220px; border-radius:8px; box-shadow:0 1px 8px #bbb; }
+  #book-detail-modal-close { position:absolute; top:22px; right:22px; font-size:2em; background:none; border:none; color:#fff; cursor:pointer; z-index:22;}
+  #book-detail-modal-content h3 { margin:13px 0 2px 0; }
+  #book-detail-modal-content .book-detail-id { color:#777; font-size:1em; margin-bottom:7px; }
+  #book-detail-modal-content .book-detail-desc { margin-top:12px; color:#444; white-space:pre-wrap;}
+  @media (max-width: 768px) {
+    body { padding: 15px; }
+    .header { flex-direction: column; gap: 15px; align-items: stretch; }
+    .searchbar-group { max-width: 100%; }
+    .search-container { max-width: 100%; }
+    #new-books {font-size: 15px;}
+    #new-books-cards {padding-left:0;padding-right:0;}
+  }
+  html, body {
+    width: 100%;
+    overflow-x: hidden;
+  }
+  .container {
+    max-width: 900px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 24px;
+    box-sizing: border-box;
+  }
+  @media (max-width: 450px) {
+    .container {
+      padding: 8px;
     }
-    .searchbar-group input {
-      border: none;
-      box-shadow: none;
-      outline: none;
-      flex: 1;
-      padding: 9px 8px;
-      font-size: 1em;
-      background: transparent;
-    }
-    .searchbar-group .qr-button,
-    .searchbar-group .clear-search-button {
-      border: none;
-      background: none;
-      padding: 0 13px;
-      height: 39px;
-      cursor: pointer;
-      font-size: 1.25em;
-      color: #007bff;
-      transition: background 0.13s;
-    }
-    .searchbar-group .qr-button:hover,
-    .searchbar-group .clear-search-button:hover {
-      background: #f1f6ff;
-    }
-    .show-all-button {
-      background: #007bff; color: #fff; border: none; font-size: 14px;
-      padding: 4px 10px; border-radius: 6px; cursor: pointer; margin-left: 9px;
-      transition: background 0.15s;
-    }
-    .show-all-button:hover { background: #0056b3; }
-    .book { background: #fff; margin: 10px 0; padding: 12px; border-radius: 7px; box-shadow: 0 0 6px #ccc; overflow: hidden; min-height: 115px; }
     .cover,
     .book img.cover {
-      width: 60px;
-      height: 90px;
-      max-width: 60px;
-      max-height: 90px;
-      object-fit: cover;
-      aspect-ratio: 2/3;
-      border-radius: 3px;
-      background: #fff;
-      display: block;
+      width: 80px;
+      height: 120px;
+      max-width: 80px;
+      max-height: 120px;
     }
-    .book-details { overflow: hidden; }
-    .admin-controls { margin-top: 10px; }
-    .edit-fields input, .edit-fields label { margin: 2px 0; display: block; width: 90%; padding: 4px; }
-    .edit-fields textarea { margin: 2px 0; display: block; width: 95%; padding: 4px; }
-    .edit-fields.hidden { display: none; }
-    .edit-fields .neu-checkbox { width: auto; display: inline-block; margin-left: 0; margin-right: 8px; }
-    .edit-fields .neu-label { display: inline-block; width: auto; margin-right: 0; font-weight: bold; color: #e88; }
-    #modal { display: none; position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 10;}
-    #modal-content { background: #fff; padding: 30px; border-radius: 10px; min-width: 320px; max-width: 90vw; max-height: 90vh; overflow: auto; }
-    #qr-reader { width: 100%; max-width: 400px; }
-    #admin-login-panel {margin-top:10px;}
-    #admin-login-panel.hidden { display: none; }
-    #admin-panel {margin-top:10px;}
-    #admin-panel.hidden { display: none; }
-    #admin-panel input { display: block; margin: 5px 0; padding: 5px; width: 200px; }
-    #log-output {white-space: pre; font-size: 0.95em; background: #eef; padding: 10px; border-radius: 6px; max-height:150px; overflow-y:auto;}
-    #book-list {margin-top:20px;}
-    #new-books {margin-top:0; margin-bottom:10px;}
-    button {font-size:1em; padding: 6px 12px; margin: 2px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; background: #f9f9f9;}
-    button:hover { background: #e9e9e9; }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
-    .pagination-bar {text-align:center; margin:24px 0 8px 0;}
-    .pagination-btn {
-      background: #eee;
-      color: #333;
-      border: none;
-      font-size: 15px;
-      padding: 6px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      margin: 0 5px;
-      transition: background 0.15s;
+    h1 {
+      font-size: 1.2em;
     }
-    .pagination-btn:hover { background: #ddd; }
-    .pagination-info { font-size: 15px; color: #444; margin: 0 10px; }
-    .neu-badge {
-      color: #e88; background: #fff4ee; border-radius: 6px; font-weight: bold;
-      font-size: 13px; margin-left: 8px; padding: 1px 6px; border: 1px solid #e6b;
-      vertical-align: middle;
-    }
-    #new-books-cards {
-      display: flex;
-      overflow-x: auto;
-      gap: 16px;
-      padding: 8px 0 8px 0;
-      margin: 0 0 10px 0;
-    }
-    .book-card {
-      background: #e3f1ff;
-      border-radius: 13px;
-      box-shadow: 0 1px 8px #b2d0fa;
-      min-width: 135px;
-      max-width: 135px;
-      flex: 0 0 135px;
-      display: flex;
+    .book {
       flex-direction: column;
-      align-items: center;
-      padding: 10px 8px 12px 8px;
-      position: relative;
-      cursor: pointer;
-      transition: box-shadow 0.14s;
+      gap: 8px;
+      padding: 7px;
     }
-    .book-card:hover {
-      box-shadow: 0 2px 12px #7bb7f8;
-    }
+    .searchbar-group { max-width: 100%; }
     .book-card-img-wrap {
-      width: 60px;
-      height: 90px;
-      max-width: 60px;
-      max-height: 90px;
-      border-radius: 10px;
-      overflow: hidden;
-      position: relative;
-      background: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 48px;
+      height: 72px;
+      max-width: 48px;
+      max-height: 72px;
     }
-    .book-card-img-wrap img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      aspect-ratio: 2/3;
-      display: block;
-    }
-    .book-card-neu {
-      position: absolute;
-      top: 6px; right: 6px;
-      background: #ffe066;
-      color: #d88;
-      font-weight: bold;
-      font-size: 13px;
-      border-radius: 6px;
-      padding: 2px 8px;
-      box-shadow: 0 1px 2px #ccc;
-      z-index: 2;
-    }
-    .book-card-title {
-      font-size: 0.96em;
-      font-weight: bold;
-      color: #335;
-      margin-top: 7px;
-      text-align: center;
-      word-break: break-word;
-    }
-    .book-card-id {
-      font-size: 0.92em;
-      color: #447;
-      margin-top: 2px;
-      text-align: center;
-    }
-    #book-detail-modal { display:none; position:fixed; z-index:20; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); align-items:center; justify-content:center;}
-    #book-detail-modal-content { background:#fff; border-radius:14px; padding:24px; max-width:95vw; min-width:250px; max-height:90vh; box-sizing:border-box; overflow:auto; text-align:center;}
-    #book-detail-modal-content img { max-width:220px; max-height:220px; border-radius:8px; box-shadow:0 1px 8px #bbb; }
-    #book-detail-modal-close { position:absolute; top:22px; right:22px; font-size:2em; background:none; border:none; color:#fff; cursor:pointer; z-index:22;}
-    #book-detail-modal-content h3 { margin:13px 0 2px 0; }
-    #book-detail-modal-content .book-detail-id { color:#777; font-size:1em; margin-bottom:7px; }
-    #book-detail-modal-content .book-detail-desc { margin-top:12px; color:#444; white-space:pre-wrap;}
-    @media (max-width: 768px) {
-      body { padding: 15px; }
-      .header { flex-direction: column; gap: 15px; align-items: stretch; }
-      .searchbar-group { max-width: 100%; }
-      .search-container { max-width: 100%; }
-      #new-books {font-size: 15px;}
-      #new-books-cards {padding-left:0;padding-right:0;}
-    }
-    html, body {
-      width: 100%;
-      overflow-x: hidden;
-    }
-    .container {
-      max-width: 900px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 24px;
-      box-sizing: border-box;
-    }
-    @media (max-width: 450px) {
-      .container {
-        padding: 8px;
-      }
-      h1 {
-        font-size: 1.2em;
-      }
-      .book {
-        flex-direction: column;
-        gap: 8px;
-        padding: 7px;
-      }
-      .searchbar-group { max-width: 100%; }
-      .cover,
-      .book img.cover {
-        width: 48px;
-        height: 72px;
-        max-width: 48px;
-        max-height: 72px;
-      }
-      .book-card-img-wrap {
-        width: 48px;
-        height: 72px;
-        max-width: 48px;
-        max-height: 72px;
-      }
-    }
-    #admin-login-footer-bar {
-      width: 100%;
-      margin-top: 40px;
-      text-align: center;
-    }
-  </style>
+  }
+  #admin-login-footer-bar {
+    width: 100%;
+    margin-top: 40px;
+    text-align: center;
+  }
+</style>
 </head>
 <body>
   <div class="header">
