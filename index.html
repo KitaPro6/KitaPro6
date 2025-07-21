@@ -987,9 +987,10 @@
       renderNewBooks();
     });
 
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js');
-}
+    // Service Worker Registrierung HIER
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/KitaPro6/sw.js');
+    }
   </script>
 </body>
 </html>
