@@ -55,18 +55,14 @@
     }
     .show-all-button:hover { background: #0056b3; }
     .book { background: #fff; margin: 10px 0; padding: 12px; border-radius: 7px; box-shadow: 0 0 6px #ccc; overflow: hidden; min-height: 115px; }
-    .cover {
-      float: left;
-      width: 60px;
-      height: 90px;
-      max-width: 60px;
-      max-height: 90px;
-      margin-right: 12px;
-      margin-bottom: 6px;
-      border: 1px solid #eee;
-      border-radius: 3px;
+    .cover,
+    .book img.cover,
+    .book-card-img-wrap img {
+      width: 100%;
+      height: 100%;
       object-fit: cover;
-      background: #fff;
+      aspect-ratio: 2/3;
+      display: block;
     }
     .book-details { overflow: hidden; }
     .admin-controls { margin-top: 10px; }
@@ -148,6 +144,8 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
+      aspect-ratio: 2/3;
+      display: block;
     }
     .book-card-neu {
       position: absolute;
@@ -214,10 +212,21 @@
         padding: 7px;
       }
       .searchbar-group { max-width: 100%; }
-      .cover, .book img.cover {
+      .cover,
+      .book img.cover,
+      .book-card-img-wrap img {
         max-width: 80vw;
         width: 100%;
         height: auto;
+        aspect-ratio: 2/3;
+        object-fit: cover;
+        display: block;
+      }
+      .book-card-img-wrap {
+        width: 80px;
+        height: 120px;
+        max-width: 80vw;
+        max-height: 120vw;
       }
     }
     #admin-login-footer-bar {
