@@ -13,39 +13,63 @@
 <style>
     body { font-family: sans-serif; padding: 25px; background: #f6f6ff; margin: 0; }
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .search-container { display: flex; align-items: center; gap: 8px; flex: 1; max-width: 450px; }
-    #search { flex: 1; font-size: 1em; padding: 8px; border: 2px solid #ddd; border-radius: 6px; }
-    .qr-button {
+    /* Neue Suchleiste als zusammenhängender Block */
+    .searchbar-group {
+      display: flex;
+      align-items: center;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px #e5eaff;
+      overflow: hidden;
+      border: 2px solid #bbb;
+      max-width: 450px;
+      margin-bottom: 8px;
+    }
+    .searchbar-group input {
+      border: none;
+      box-shadow: none;
+      outline: none;
+      flex: 1;
+      padding: 9px 8px;
+      font-size: 1em;
       background: transparent;
+    }
+    .searchbar-group .qr-button,
+    .searchbar-group .clear-search-button {
+      border: none;
+      background: none;
+      padding: 0 13px;
+      height: 39px;
+      cursor: pointer;
+      font-size: 1.25em;
       color: #007bff;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 18px;
-      transition: background 0.15s;
+      transition: background 0.13s;
     }
-    .qr-button:hover { background: #eee; }
-    .clear-search-button {
-      background: transparent;
-      border: none;
-      font-size: 18px;
-      padding: 0 8px;
-      border-radius: 6px;
-      cursor: pointer;
-      color: #666;
-      transition: background 0.15s;
+    .searchbar-group .qr-button:hover,
+    .searchbar-group .clear-search-button:hover {
+      background: #f1f6ff;
     }
-    .clear-search-button:hover { background: #eee; }
     .show-all-button {
       background: #007bff; color: #fff; border: none; font-size: 14px;
-      padding: 4px 10px; border-radius: 6px; cursor: pointer; margin-left: 2px;
+      padding: 4px 10px; border-radius: 6px; cursor: pointer; margin-left: 9px;
       transition: background 0.15s;
     }
     .show-all-button:hover { background: #0056b3; }
     .admin-corner { display: flex; flex-direction: column; gap: 5px; }
     .book { background: #fff; margin: 10px 0; padding: 12px; border-radius: 7px; box-shadow: 0 0 6px #ccc; overflow: hidden; min-height: 115px; }
-    .cover { float: left; max-width: 70px; max-height: 100px; margin-right: 12px; margin-bottom: 6px; border: 1px solid #eee; border-radius: 3px;}
+    .cover {
+      float: left;
+      width: 60px;
+      height: 90px;
+      max-width: 60px;
+      max-height: 90px;
+      margin-right: 12px;
+      margin-bottom: 6px;
+      border: 1px solid #eee;
+      border-radius: 3px;
+      object-fit: cover;
+      background: #fff;
+    }
     .book-details { overflow: hidden; }
     .admin-controls { margin-top: 10px; }
     .edit-fields input, .edit-fields label { margin: 2px 0; display: block; width: 90%; padding: 4px; }
@@ -113,8 +137,15 @@
       box-shadow: 0 2px 12px #7bb7f8;
     }
     .book-card-img-wrap {
-      width: 90px; height: 90px; border-radius: 10px; overflow: hidden; position: relative; background: #fff;
-      display: flex; align-items: center; justify-content: center;
+      width: 60px;
+      height: 90px;
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .book-card-img-wrap img {
       width: 100%;
@@ -158,6 +189,7 @@
     @media (max-width: 768px) {
       body { padding: 15px; }
       .header { flex-direction: column; gap: 15px; align-items: stretch; }
+      .searchbar-group { max-width: 100%; }
       .search-container { max-width: 100%; }
       .admin-corner { flex-direction: row; justify-content: center; }
       #new-books {font-size: 15px;}
@@ -186,12 +218,7 @@
         gap: 8px;
         padding: 7px;
       }
-      .search-container {
-        max-width: 100%;
-      }
-      #new-books {
-        font-size: 15px;
-      }
+      .searchbar-group { max-width: 100%; }
       .cover, .book img.cover {
         max-width: 80vw;
         width: 100%;
@@ -204,12 +231,13 @@
   <div class="header">
     <div>
       <h1>📚 Kindergarten-Bibliothek</h1>
-      <div class="search-container">
-        <input type="text" id="search" placeholder="Suchen nach Titel, ID, Kategorie, Schlagwort ..." autocomplete="off">
+      <!-- Neue Suchleiste -->
+      <div class="searchbar-group">
         <button class="qr-button" onclick="startQRScanner()" title="QR-Code scannen">📷</button>
+        <input type="text" id="search" placeholder="Suchen nach Titel, ID, Kategorie, Schlagwort ..." autocomplete="off">
         <button class="clear-search-button" onclick="clearSearch()" title="Suchfeld leeren">✖️</button>
-        <button class="show-all-button" onclick="showAllBooks()" title="Alle anzeigen">Alle anzeigen</button>
       </div>
+      <button class="show-all-button" onclick="showAllBooks()" title="Alle anzeigen">Alle anzeigen</button>
       <div id="new-books"></div>
       <div id="new-books-cards"></div>
     </div>
@@ -240,6 +268,10 @@
     <input id="new-cat" placeholder="Kategorie">
     <input id="new-keywords" placeholder="Schlagworte">
     <input id="new-age" placeholder="Alter (z.B. 3-6)">
+    <label><input type="checkbox" id="new-flag"> Neu!</label>
+    <!-- Bild hinzufügen/aufnehmen -->
+    <button onclick="triggerAddBookImage()">Bild hinzufügen/aufnehmen</button>
+    <input type="file" id="add-book-img" accept="image/*" capture="environment" style="display:none;">
     <button onclick="addBook()">➕ Hinzufügen</button>
     <button onclick="exportData()">📁 Backup erstellen</button>
     <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(event)">
@@ -249,6 +281,8 @@
     <div id="log-output"></div>
     <button onclick="resetData()">Alles zurücksetzen</button>
   </div>
+
+  <div id="admin-login-footer-bar"></div>
 
   <script>
     if ('serviceWorker' in navigator) {
@@ -486,6 +520,7 @@
 
     document.addEventListener('DOMContentLoaded', function() {
       loadData();
+      updateAdminFooter();
     });
 
     function renderNewBooks() {
@@ -523,7 +558,7 @@
           ${newBooks.map((b, i) => `
             <div class="book-card" onclick="showBookDetailModal('${b.id}')">
               <div class="book-card-img-wrap">
-                ${b.img ? `<img src="${b.img}" alt="Buchbild">` : `<div style="width:90px;height:90px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:32px;">📕</div>`}
+                ${b.img ? `<img src="${b.img}" alt="Buchbild">` : `<div style="width:60px;height:90px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:32px;">📕</div>`}
                 <span class="book-card-neu">Neu!</span>
               </div>
               <div class="book-card-id">${b.id}</div>
@@ -537,13 +572,22 @@
     function showBookDetailModal(bookId) {
       const book = books.find(b => b.id === bookId);
       if (!book) return;
+      // Statusanzeige
+      const statusHTML = book.status === "verfügbar"
+        ? `<span style="color:green;font-weight:bold;font-size:1.1em;">📗 Verfügbar</span>`
+        : `<span style="color:#c00;font-weight:bold;font-size:1.1em;">📕 Geliehen von Gruppe ${book.group || "?"}</span>`;
+      const actionBtns = book.status === "verfügbar"
+        ? `<button onclick="showAusleihPopup(${books.indexOf(book)});closeBookDetailModal();">📦 Ausleihen</button>`
+        : `<button onclick="zurueck(${books.indexOf(book)});closeBookDetailModal();">📚 Zurückgeben</button>`;
       const modal = document.getElementById("book-detail-modal");
       const content = document.getElementById("book-detail-modal-content");
       content.innerHTML = `
         ${book.img ? `<img src="${book.img}" alt="Buchbild"><br>` : ""}
         <h3>${book.title}</h3>
         <div class="book-detail-id">${book.id}</div>
-        <div class="book-detail-desc">${book.beschreibung ? book.beschreibung : "<span style='color:#aaa'>Keine Beschreibung vorhanden.</span>"}</div>
+        <div class="book-detail-desc">${book.beschreibung || "<span style='color:#aaa'>Keine Beschreibung vorhanden.</span>"}</div>
+        <div style="margin-top:13px;">${statusHTML}</div>
+        <div style="margin-top:10px;">${actionBtns}</div>
       `;
       modal.style.display = "flex";
     }
@@ -569,6 +613,9 @@
         if (book.isNew && book.newSince && (now - new Date(book.newSince).getTime() <= 6 * 7 * 24 * 60 * 60 * 1000)) {
           neuHtml = `<span class="neu-badge">Neu!</span>`;
         }
+        const statusHtml = book.status === "verfügbar"
+          ? `<span style="color:green;font-weight:bold;">📗 Verfügbar</span>`
+          : `<span style="color:#c00;font-weight:bold;">📕 Geliehen von Gruppe ${book.group || "?"}</span>`;
         const div = document.createElement("div");
         div.className = "book";
         div.innerHTML = `
@@ -578,7 +625,7 @@
             Kategorie: ${book.category}<br>
             Schlagworte: ${book.keywords}<br>
             Alter: ${book.age || 'Nicht angegeben'}<br>
-            Status: ${book.status}${book.status === 'ausgeliehen' ? ` (${book.group}${book.borrower ? ', ' + book.borrower : ''}${book.borrowDate ? ', ' + book.borrowDate : ''})` : ''}<br>
+            Status: ${statusHtml}<br>
             <button onclick="showAusleihPopup(${books.indexOf(book)})" ${book.status === 'ausgeliehen' ? 'disabled' : ''}>📦 Ausleihen</button>
             <button onclick="zurueck(${books.indexOf(book)})" ${book.status === 'verfügbar' ? 'disabled' : ''}>📚 Zurückgeben</button>
             ${adminMode ? `
@@ -604,11 +651,14 @@
         list.appendChild(div);
       });
 
+      // Pagination und Admin-Login/Logout unten anzeigen
       list.innerHTML += `<div class="pagination-bar">` +
         (currentPage > 1 ? `<button class="pagination-btn" onclick="prevPage()">⬅️ Vorherige Seite</button>` : '') +
         `<span class="pagination-info">Seite ${currentPage} von ${totalPages}</span>` +
         (currentPage < totalPages ? `<button class="pagination-btn" onclick="nextPage()">Nächste Seite ➡️</button>` : '') +
+        `<span id="admin-login-footer" style="margin-left:18px;"></span>` +
         `</div>`;
+      updateAdminFooter();
     }
 
     function nextPage() {
@@ -773,17 +823,19 @@
       adminMode = false;
       renderBooks(document.getElementById("search").value);
       renderNewBooks();
+      updateAdminFooter();
     }
 
     function checkAdmin() {
       const pw = document.getElementById("admin-pw").value;
-      if (pw === "Märchenschloss2025") {
+      if (pw === "kitadmin") {
         adminMode = true;
         document.getElementById("admin-login").classList.add("hidden");
         document.getElementById("admin-panel").classList.remove("hidden");
         renderBooks(document.getElementById("search").value);
         renderNewBooks();
         updateLog();
+        updateAdminFooter();
       } else {
         alert("❌ Falsches Passwort");
         document.getElementById("admin-pw").value = "";
@@ -796,7 +848,22 @@
       document.getElementById("admin-panel").classList.add("hidden");
       renderBooks(document.getElementById("search").value);
       renderNewBooks();
+      updateAdminFooter();
     }
+
+    // --- Bild hinzufügen/aufnehmen bei Buch hinzufügen
+    let addBookImgData = "";
+    function triggerAddBookImage() {
+      document.getElementById('add-book-img').click();
+    }
+    document.getElementById('add-book-img').onchange = function(e){
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) { addBookImgData = evt.target.result; };
+        reader.readAsDataURL(file);
+      }
+    };
 
     function addBook() {
       const id = document.getElementById("new-id").value.trim();
@@ -806,7 +873,18 @@
       const age = document.getElementById("new-age").value.trim();
       const beschreibung = "";
       if (!id || !title) return alert("Bitte ID und Titel angeben");
-      books.push({id, title, category: cat, keywords: keys, age, status: "verfügbar", group: "", img:"", borrower: "", borrowDate: "", isNew:false, newSince:"", beschreibung});
+      const isNew = document.getElementById("new-flag").checked;
+      books.push({
+        id, title, category: cat, keywords: keys, age,
+        status: "verfügbar",
+        group: "",
+        img: addBookImgData,
+        borrower: "",
+        borrowDate: "",
+        isNew,
+        newSince: isNew ? new Date().toISOString() : "",
+        beschreibung
+      });
       log.push(`${new Date().toLocaleString()}: ${id} hinzugefügt`);
       saveData();
       currentPage = 1;
@@ -818,56 +896,69 @@
       document.getElementById("new-cat").value = "";
       document.getElementById("new-keywords").value = "";
       document.getElementById("new-age").value = "";
+      document.getElementById("new-flag").checked = false;
+      addBookImgData = "";
+    }
+
+    // Admin-Passwortabfrage für Backup (Export/Import)
+    function checkAdminPasswordAction(actionFn) {
+      const pw = prompt("Admin-Passwort zur Bestätigung:");
+      if (pw === "kitadmin") actionFn();
+      else alert("❌ Falsches Passwort");
     }
 
     function exportData() {
-      const exportData = {
-        books: books,
-        log: log,
-        exportDate: new Date().toISOString(),
-        version: "1.0"
-      };
-      const dataStr = JSON.stringify(exportData, null, 2);
-      const dataBlob = new Blob([dataStr], {type: 'application/json'});
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(dataBlob);
-      link.download = `bibliothek-backup-${new Date().toISOString().split('T')[0]}.json`;
-      link.click();
-      log.push(`${new Date().toLocaleString()}: Backup erstellt`);
-      updateLog();
-      saveData();
+      checkAdminPasswordAction(() => {
+        const exportData = {
+          books: books,
+          log: log,
+          exportDate: new Date().toISOString(),
+          version: "1.0"
+        };
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const dataBlob = new Blob([dataStr], {type: 'application/json'});
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = `bibliothek-backup-${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        log.push(`${new Date().toLocaleString()}: Backup erstellt`);
+        updateLog();
+        saveData();
+      });
     }
 
     function importData(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const importedData = JSON.parse(e.target.result);
-          if (importedData.books && Array.isArray(importedData.books)) {
-            if (confirm(`Backup vom ${importedData.exportDate ? new Date(importedData.exportDate).toLocaleDateString('de-DE') : 'unbekannt'} laden?\n\nDies wird alle aktuellen Daten ersetzen!`)) {
-              books = importedData.books;
-              if (importedData.log && Array.isArray(importedData.log)) {
-                log = importedData.log;
+      checkAdminPasswordAction(() => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            const importedData = JSON.parse(e.target.result);
+            if (importedData.books && Array.isArray(importedData.books)) {
+              if (confirm(`Backup vom ${importedData.exportDate ? new Date(importedData.exportDate).toLocaleDateString('de-DE') : 'unbekannt'} laden?\n\nDies wird alle aktuellen Daten ersetzen!`)) {
+                books = importedData.books;
+                if (importedData.log && Array.isArray(importedData.log)) {
+                  log = importedData.log;
+                }
+                log.push(`${new Date().toLocaleString()}: Backup geladen`);
+                saveData();
+                currentPage = 1;
+                renderBooks(document.getElementById("search").value);
+                renderNewBooks();
+                updateLog();
+                alert("Backup erfolgreich geladen!");
               }
-              log.push(`${new Date().toLocaleString()}: Backup geladen`);
-              saveData();
-              currentPage = 1;
-              renderBooks(document.getElementById("search").value);
-              renderNewBooks();
-              updateLog();
-              alert("Backup erfolgreich geladen!");
+            } else {
+              alert("Ungültiges Backup-Format!");
             }
-          } else {
-            alert("Ungültiges Backup-Format!");
+          } catch (error) {
+            alert("Fehler beim Laden des Backups: " + error.message);
           }
-        } catch (error) {
-          alert("Fehler beim Laden des Backups: " + error.message);
-        }
-      };
-      reader.readAsText(file);
-      event.target.value = '';
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+      });
     }
 
     function updateLog() {
@@ -896,6 +987,20 @@
       renderBooks(e.target.value);
       renderNewBooks();
     });
+
+    // Admin-Login/Logout in Pagination-Bar anzeigen
+    function updateAdminFooter() {
+      // Wird in der Pagination-Bar platziert
+      const el = document.getElementById("admin-login-footer");
+      if (!el) return;
+      let html = "";
+      if (!adminMode) {
+        html = `<button id="admin-login-btn" onclick="showAdminLogin()">🔑 Admin</button>`;
+      } else {
+        html = `<button id="admin-logout-btn" onclick="logoutAdmin()">Logout</button>`;
+      }
+      el.innerHTML = html;
+    }
 
     renderBooks();
     renderNewBooks();
