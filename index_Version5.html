@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kindergarten-Bibliothek</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#007bff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Kindergarten-Bibliothek">
+  <script src="jsQR.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 25px; background: #f6f6ff; margin: 0; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .search-container { display: flex; align-items: center; gap: 8px; flex: 1; max-width: 450px; }
+    #search { flex: 1; font-size: 1em; padding: 8px; border: 2px solid #ddd; border-radius: 6px; }
+    .qr-button {
+      background: transparent;
+      color: #007bff;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 18px;
+      transition: background 0.15s;
+    }
+    .qr-button:hover { background: #eee; }
+    .clear-search-button {
+      background: transparent;
+      border: none;
+      font-size: 18px;
+      padding: 0 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #666;
+      transition: background 0.15s;
+    }
+    .clear-search-button:hover { background: #eee; }
+    .show-all-button {
+      background: #007bff; color: #fff; border: none; font-size: 14px;
+      padding: 4px 10px; border-radius: 6px; cursor: pointer; margin-left: 2px;
+      transition: background 0.15s;
+    }
+    .show-all-button:hover { background: #0056b3; }
+    .admin-corner { display: flex; flex-direction: column; gap: 5px; }
+    .book { background: #fff; margin: 10px 0; padding: 12px; border-radius: 7px; box-shadow: 0 0 6px #ccc; overflow: hidden; min-height: 115px; }
+    .cover { float: left; max-width: 70px; max-height: 100px; margin-right: 12px; margin-bottom: 6px; border: 1px solid #eee; border-radius: 3px;}
+    .book-details { overflow: hidden; }
+    .admin-controls { margin-top: 10px; }
+    .edit-fields input, .edit-fields label { margin: 2px 0; display: block; width: 90%; padding: 4px; }
+    .edit-fields.hidden { display: none; }
+    .edit-fields .neu-checkbox { width: auto; display: inline-block; margin-left: 0; margin-right: 8px; }
+    .edit-fields .neu-label { display: inline-block; width: auto; margin-right: 0; font-weight: bold; color: #e88; }
+    #modal { display: none; position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 10;}
+    #modal-content { background: #fff; padding: 30px; border-radius: 10px; min-width: 320px; max-width: 90vw; max-height: 90vh; overflow: auto; }
+    #qr-reader { width: 100%; max-width: 400px; }
+    #admin-login {margin-top:10px;}
+    #admin-login.hidden { display: none; }
+    #admin-panel {margin-top:10px;}
+    #admin-panel.hidden { display: none; }
+    #admin-panel input { display: block; margin: 5px 0; padding: 5px; width: 200px; }
+    #log-output {white-space: pre; font-size: 0.95em; background: #eef; padding: 10px; border-radius: 6px; max-height:150px; overflow-y:auto;}
+    #book-list {margin-top:20px;}
+    #new-books {margin-top:0; margin-bottom:10px;}
+    button {font-size:1em; padding: 6px 12px; margin: 2px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; background: #f9f9f9;}
+    button:hover { background: #e9e9e9; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .pagination-bar {text-align:center; margin:24px 0 8px 0;}
+    .pagination-btn {
+      background: #eee;
+      color: #333;
+      border: none;
+      font-size: 15px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 0 5px;
+      transition: background 0.15s;
+    }
+    .pagination-btn:hover { background: #ddd; }
+    .pagination-info { font-size: 15px; color: #444; margin: 0 10px; }
+    .neu-badge {
+      color: #e88; background: #fff4ee; border-radius: 6px; font-weight: bold;
+      font-size: 13px; margin-left: 8px; padding: 1px 6px; border: 1px solid #e6b;
+      vertical-align: middle;
+    }
+    @media (max-width: 768px) {
+      body { padding: 15px; }
+      .header { flex-direction: column; gap: 15px; align-items: stretch; }
+      .search-container { max-width: 100%; }
+      .admin-corner { flex-direction: row; justify-content: center; }
+      #new-books {font-size: 15px;}
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1>📚 Kindergarten-Bibliothek</h1>
+      <div class="search-container">
+        <input type="text" id="search" placeholder="Suchen nach Titel, ID, Kategorie, Schlagwort ..." autocomplete="off">
+        <button class="qr-button" onclick="startQRScanner()" title="QR-Code scannen">📷</button>
+        <button class="clear-search-button" onclick="clearSearch()" title="Suchfeld leeren">✖️</button>
+        <button class="show-all-button" onclick="showAllBooks()" title="Alle anzeigen">Alle anzeigen</button>
+      </div>
+      <div id="new-books"></div>
+    </div>
+    <div class="admin-corner">
+      <button onclick="showAdminLogin()">🔑 Admin</button>
+      <div id="admin-login" class="hidden">
+        <input type="password" id="admin-pw" placeholder="Passwort" style="width: 120px; margin-bottom: 5px;">
+        <button onclick="checkAdmin()">Login</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="book-list"></div>
+
+  <div id="modal">
+    <div id="modal-content"></div>
+  </div>
+
+  <div id="admin-panel" class="hidden">
+    <h3>Buch hinzufügen</h3>
+    <input id="new-id" placeholder="ID (z.B. B-0003)">
+    <input id="new-title" placeholder="Titel">
+    <input id="new-cat" placeholder="Kategorie">
+    <input id="new-keywords" placeholder="Schlagworte">
+    <input id="new-age" placeholder="Alter (z.B. 3-6)">
+    <button onclick="addBook()">➕ Hinzufügen</button>
+    <button onclick="exportData()">📁 Backup erstellen</button>
+    <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(event)">
+    <button onclick="document.getElementById('import-file').click()">📂 Backup laden</button>
+    <button onclick="logoutAdmin()">Logout</button>
+    <h3>Ausleihverlauf</h3>
+    <div id="log-output"></div>
+    <button onclick="resetData()">Alles zurücksetzen</button>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('./sw.js').then(function(registration) {
+          console.log('ServiceWorker registered successfully:', registration.scope);
+        }, function(err) {
+          console.log('ServiceWorker registration failed: ', err);
+        });
+      });
+    }
+
+    let db;
+    const dbName = 'KindergartenBibliothek';
+    const dbVersion = 1;
+
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(dbName, dbVersion);
+
+        request.onerror = () => {
+          reject(request.error);
+        };
+        request.onsuccess = () => {
+          db = request.result;
+          resolve(db);
+        };
+        request.onupgradeneeded = (event) => {
+          db = event.target.result;
+          if (!db.objectStoreNames.contains('books')) {
+            const booksStore = db.createObjectStore('books', { keyPath: 'id' });
+            booksStore.createIndex('title', 'title', { unique: false });
+            booksStore.createIndex('category', 'category', { unique: false });
+            booksStore.createIndex('status', 'status', { unique: false });
+          }
+          if (!db.objectStoreNames.contains('log')) {
+            db.createObjectStore('log', { keyPath: 'id', autoIncrement: true });
+          }
+        };
+      });
+    }
+
+    async function loadData() {
+      try {
+        await initDB();
+        const booksTransaction = db.transaction(['books'], 'readonly');
+        const booksStore = booksTransaction.objectStore('books');
+        const booksRequest = booksStore.getAll();
+        booksRequest.onsuccess = () => {
+          if (booksRequest.result.length > 0) {
+            books = booksRequest.result;
+          } else {
+            books = [
+              {id:"B-001", title:"Titel 1", category:"Bilderbuch", keywords:"Löwe, Elefant", status:"verfügbar", age:"3-6", group:"", img:"", borrower:"", borrowDate:"", isNew:false, newSince:""},
+              {id:"B-002", title:"Titel 2", category:"Sachbuch", keywords:"Ritter, Pferd", status:"verfügbar", age:"5-8", group:"", img:"", borrower:"", borrowDate:"", isNew:false, newSince:""}
+            ];
+            saveData();
+          }
+          renderBooks();
+          renderNewBooks();
+        };
+        const logTransaction = db.transaction(['log'], 'readonly');
+        const logStore = logTransaction.objectStore('log');
+        const logRequest = logStore.getAll();
+        logRequest.onsuccess = () => {
+          log = logRequest.result.map(item => item.message) || [];
+          updateLog();
+        };
+      } catch (error) {
+        const storedBooks = localStorage.getItem("books");
+        const storedLog = localStorage.getItem("log");
+        if (storedBooks) books = JSON.parse(storedBooks);
+        if (storedLog) log = JSON.parse(storedLog);
+        renderBooks();
+        renderNewBooks();
+        updateLog();
+      }
+    }
+
+    async function saveData() {
+      try {
+        if (!db) await initDB();
+        const booksTransaction = db.transaction(['books'], 'readwrite');
+        const booksStore = booksTransaction.objectStore('books');
+        await new Promise((resolve, reject) => {
+          const clearRequest = booksStore.clear();
+          clearRequest.onsuccess = () => resolve();
+          clearRequest.onerror = () => reject(clearRequest.error);
+        });
+        for (const book of books) booksStore.add(book);
+        const logTransaction = db.transaction(['log'], 'readwrite');
+        const logStore = logTransaction.objectStore('log');
+        const existingLogRequest = logStore.count();
+        existingLogRequest.onsuccess = () => {
+          const existingCount = existingLogRequest.result;
+          for (let i = existingCount; i < log.length; i++) {
+            logStore.add({ message: log[i] });
+          }
+        };
+      } catch (error) {
+        localStorage.setItem("books", JSON.stringify(books));
+        localStorage.setItem("log", JSON.stringify(log));
+      }
+    }
+
+    let books = [];
+    let log = [];
+    let adminMode = false;
+    let currentPage = 1;
+    const booksPerPage = 30;
+
+    const groups = [
+      {name:"Sterne", symbol:"⭐️"},
+      {name:"Sonne", symbol:"☀️"},
+      {name:"Mond", symbol:"🌙"},
+      {name:"Regenbogen", symbol:"🌈"},
+      {name:"Regentropfen", symbol:"💧"},
+      {name:"Schneeflocken", symbol:"❄️"},
+      {name:"Sprachförderung", symbol:"🗣️"}
+    ];
+
+    let stream;
+    let qrScannerActive = false;
+    let qrScanInterval;
+
+    function startQRScanner() {
+      const modal = document.getElementById("modal");
+      const content = document.getElementById("modal-content");
+      content.innerHTML = `
+        <h3>QR-Code Scanner</h3>
+        <div style="text-align: center;">
+          <video id="qr-video" width="300" height="300" autoplay playsinline muted style="border: 2px solid #ddd; border-radius: 8px;"></video>
+          <canvas id="qr-canvas" width="300" height="300" style="display:none;"></canvas>
+          <br><br>
+          <input type="text" id="manual-input" placeholder="Oder manuell eingeben (z.B. B-0002)" style="width: 200px; padding: 8px; margin: 10px;">
+          <br>
+          <button onclick="searchManualInput()">Suchen</button>
+          <button onclick="stopQRScanner()">Schließen</button>
+        </div>
+        <p style="font-size: 14px; color: #666; text-align: center;">
+          Halten Sie den QR-Code vor die Kamera oder geben Sie die Buchnummer manuell ein.
+        </p>
+      `;
+      modal.style.display = "flex";
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        qrScannerActive = true;
+        navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment", width: { ideal: 300 }, height: { ideal: 300 } }
+        })
+        .then(function(mediaStream) {
+          stream = mediaStream;
+          const video = document.getElementById("qr-video");
+          video.srcObject = stream;
+          video.setAttribute("playsinline", true);
+          video.muted = true;
+          video.play();
+          qrScanInterval = setInterval(() => {
+            scanQRCode(video);
+          }, 400);
+        })
+        .catch(function(err) {
+          document.getElementById("qr-video").style.display = "none";
+          alert("Kamera konnte nicht geöffnet werden. Bitte geben Sie die Buchnummer manuell ein.");
+        });
+      } else {
+        document.getElementById("qr-video").style.display = "none";
+        alert("Kamera wird von diesem Browser nicht unterstützt. Bitte geben Sie die Buchnummer manuell ein.");
+      }
+    }
+
+    function scanQRCode(video) {
+      if (!qrScannerActive) return;
+      const canvas = document.getElementById("qr-canvas");
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, canvas.width, canvas.height);
+      if (code) {
+        qrScannerActive = false;
+        clearInterval(qrScanInterval);
+        stopQRScanner();
+        document.getElementById("search").value = code.data;
+        currentPage = 1;
+        renderBooks(code.data);
+        renderNewBooks();
+        const foundBooks = books.filter(book =>
+          book.id.toLowerCase().includes(code.data.toLowerCase()) ||
+          book.title.toLowerCase().includes(code.data.toLowerCase())
+        );
+        if (foundBooks.length > 0) {
+          if (foundBooks.length === 1) {
+            alert(`Buch gefunden: ${foundBooks[0].id} - ${foundBooks[0].title}`);
+          } else {
+            alert(`${foundBooks.length} Bücher gefunden`);
+          }
+        } else {
+          alert(`Kein Buch mit "${code.data}" gefunden.`);
+        }
+      }
+    }
+
+    function searchManualInput() {
+      const searchTerm = document.getElementById("manual-input").value.trim();
+      if (searchTerm) {
+        document.getElementById("search").value = searchTerm;
+        currentPage = 1;
+        renderBooks(searchTerm);
+        renderNewBooks();
+        stopQRScanner();
+        const foundBooks = books.filter(book =>
+          book.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          book.title.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        if (foundBooks.length > 0) {
+          if (foundBooks.length === 1) {
+            alert(`Buch gefunden: ${foundBooks[0].id} - ${foundBooks[0].title}`);
+          } else {
+            alert(`${foundBooks.length} Bücher gefunden`);
+          }
+        } else {
+          alert(`Kein Buch mit "${searchTerm}" gefunden.`);
+        }
+      }
+    }
+
+    function stopQRScanner() {
+      qrScannerActive = false;
+      clearInterval(qrScanInterval);
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+      }
+      closeModal();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      loadData();
+    });
+
+    function renderNewBooks() {
+      const container = document.getElementById("new-books");
+      const now = Date.now();
+      const sixWeeksMs = 6 * 7 * 24 * 60 * 60 * 1000;
+      let changed = false;
+      // Prüfe alle Bücher – entferne "Neu!" falls älter als 6 Wochen
+      books.forEach(b => {
+        if (b.isNew && b.newSince && (now - new Date(b.newSince).getTime() > sixWeeksMs)) {
+          b.isNew = false;
+          b.newSince = "";
+          changed = true;
+        }
+      });
+      if (changed) saveData(); // Aktualisiere DB, falls "Neu!" entfernt wurde
+      const newBooks = books.filter(b =>
+        b.isNew &&
+        b.newSince &&
+        (now - new Date(b.newSince).getTime() <= sixWeeksMs)
+      );
+      if (newBooks.length === 0) {
+        container.innerHTML = "";
+        return;
+      }
+      container.innerHTML = `
+        <div style="background:#fffbcc;border-radius:8px;padding:10px;margin-bottom:12px;">
+          <strong>✨ Neue Bücher:</strong>
+          <ul style="margin:7px 0 0 8px;padding:0;">
+            ${newBooks.map(b => `<li>${b.id} – ${b.title} <span class="neu-badge">Neu!</span></li>`).join("")}
+          </ul>
+        </div>
+      `;
+    }
+
+    function renderBooks(filter = "") {
+      const list = document.getElementById("book-list");
+      list.innerHTML = "";
+      let filteredBooks = books.filter(book =>
+        (book.id + book.title + book.category + book.keywords).toLowerCase().includes(filter.toLowerCase())
+      );
+      const totalPages = Math.max(1, Math.ceil(filteredBooks.length / booksPerPage));
+      if (currentPage > totalPages) currentPage = totalPages;
+      const startIdx = (currentPage - 1) * booksPerPage;
+      const endIdx = startIdx + booksPerPage;
+      const visibleBooks = filteredBooks.slice(startIdx, endIdx);
+
+      visibleBooks.forEach((book, index) => {
+        // "Neu!" Badge nur wenn Buch noch innerhalb 6 Wochen
+        const now = Date.now();
+        let neuHtml = "";
+        if (book.isNew && book.newSince && (now - new Date(book.newSince).getTime() <= 6 * 7 * 24 * 60 * 60 * 1000)) {
+          neuHtml = `<span class="neu-badge">Neu!</span>`;
+        }
+        const div = document.createElement("div");
+        div.className = "book";
+        div.innerHTML = `
+          ${book.img ? `<img src="${book.img}" class="cover" />` : ""}
+          <div class="book-details">
+            <strong>${book.id} – ${book.title} ${neuHtml}</strong><br>
+            Kategorie: ${book.category}<br>
+            Schlagworte: ${book.keywords}<br>
+            Alter: ${book.age || 'Nicht angegeben'}<br>
+            Status: ${book.status}${book.status === 'ausgeliehen' ? ` (${book.group}${book.borrower ? ', ' + book.borrower : ''}${book.borrowDate ? ', ' + book.borrowDate : ''})` : ''}<br>
+            <button onclick="showAusleihPopup(${books.indexOf(book)})" ${book.status === 'ausgeliehen' ? 'disabled' : ''}>📦 Ausleihen</button>
+            <button onclick="zurueck(${books.indexOf(book)})" ${book.status === 'verfügbar' ? 'disabled' : ''}>📚 Zurückgeben</button>
+            ${adminMode ? `
+              <div class="admin-controls">
+                <button onclick="bearbeiten(${books.indexOf(book)})">✏️ Bearbeiten</button>
+                <button onclick="loeschen(${books.indexOf(book)})">🗑️ Löschen</button>
+                <div id="edit-${books.indexOf(book)}" class="edit-fields hidden">
+                  <input id="edit-id-${books.indexOf(book)}" value="${book.id}" placeholder="ID" />
+                  <input id="edit-title-${books.indexOf(book)}" value="${book.title}" placeholder="Titel" />
+                  <input id="edit-cat-${books.indexOf(book)}" value="${book.category}" placeholder="Kategorie" />
+                  <input id="edit-keys-${books.indexOf(book)}" value="${book.keywords}" placeholder="Schlagworte" />
+                  <input id="edit-age-${books.indexOf(book)}" value="${book.age || ''}" placeholder="Alter (z.B. 3-6)" />
+                  <input type="file" accept="image/*" capture="environment" onchange="bildLaden(event, ${books.indexOf(book)})" />
+                  ${book.img ? `<img src="${book.img}" style="display:block;max-width:60px;max-height:80px;box-shadow:0 0 2px #666;margin-top:4px;">` : ""}
+                  <label class="neu-label"><input type="checkbox" class="neu-checkbox" id="edit-new-${books.indexOf(book)}" ${book.isNew ? "checked" : ""}> Neu!</label>
+                  <button onclick="speichern(${books.indexOf(book)})">💾 Speichern</button>
+                  ${book.img ? `<button onclick="bildEntfernen(${books.indexOf(book)})">Bild entfernen</button>` : ""}
+                </div>
+              </div>` : ""}
+          </div>
+        `;
+        list.appendChild(div);
+      });
+
+      list.innerHTML += `<div class="pagination-bar">` +
+        (currentPage > 1 ? `<button class="pagination-btn" onclick="prevPage()">⬅️ Vorherige Seite</button>` : '') +
+        `<span class="pagination-info">Seite ${currentPage} von ${totalPages}</span>` +
+        (currentPage < totalPages ? `<button class="pagination-btn" onclick="nextPage()">Nächste Seite ➡️</button>` : '') +
+        `</div>`;
+    }
+
+    function nextPage() {
+      currentPage++;
+      renderBooks(document.getElementById("search").value);
+      renderNewBooks();
+    }
+    function prevPage() {
+      currentPage--;
+      renderBooks(document.getElementById("search").value);
+      renderNewBooks();
+    }
+
+    function clearSearch() {
+      document.getElementById("search").value = "";
+      currentPage = 1;
+      renderBooks("");
+      renderNewBooks();
+    }
+
+    function showAllBooks() {
+      document.getElementById("search").value = "";
+      currentPage = 1;
+      renderBooks("");
+      renderNewBooks();
+    }
+
+    function bearbeiten(index) {
+      books.forEach((_, i) => {
+        const editEl = document.getElementById("edit-" + i);
+        if (editEl) editEl.classList.add("hidden");
+      });
+      document.getElementById("edit-" + index).classList.toggle("hidden");
+    }
+
+    function speichern(index) {
+      books[index].id = document.getElementById("edit-id-" + index).value;
+      books[index].title = document.getElementById("edit-title-" + index).value;
+      books[index].category = document.getElementById("edit-cat-" + index).value;
+      books[index].keywords = document.getElementById("edit-keys-" + index).value;
+      books[index].age = document.getElementById("edit-age-" + index).value;
+      // Neu!-Status und Datum
+      const neuBox = document.getElementById("edit-new-" + index);
+      if (neuBox && neuBox.checked) {
+        if (!books[index].isNew) {
+          books[index].isNew = true;
+          books[index].newSince = new Date().toISOString();
+        }
+      } else {
+        books[index].isNew = false;
+        books[index].newSince = "";
+      }
+      log.push(`${new Date().toLocaleString()}: ${books[index].id} gespeichert`);
+      saveData();
+      renderBooks(document.getElementById("search").value);
+      renderNewBooks();
+      updateLog();
+    }
+
+    function bildLaden(event, index) {
+      if (event.target.files && event.target.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          books[index].img = e.target.result;
+          saveData();
+          renderBooks(document.getElementById("search").value);
+          renderNewBooks();
+          setTimeout(() => {
+            const editEl = document.getElementById("edit-" + index);
+            if (editEl) editEl.classList.remove("hidden");
+          }, 0);
+        };
+        reader.readAsDataURL(event.target.files[0]);
+      }
+    }
+
+    function bildEntfernen(index) {
+      books[index].img = "";
+      saveData();
+      renderBooks(document.getElementById("search").value);
+      renderNewBooks();
+      setTimeout(() => {
+        const editEl = document.getElementById("edit-" + index);
+        if (editEl) editEl.classList.remove("hidden");
+      }, 0);
+    }
+
+    function loeschen(index) {
+      if (confirm("Dieses Buch wirklich löschen?")) {
+        log.push(`${new Date().toLocaleString()}: ${books[index].id} gelöscht`);
+        books.splice(index, 1);
+        saveData();
+        renderBooks(document.getElementById("search").value);
+        renderNewBooks();
+        updateLog();
+      }
+    }
+
+    function showAusleihPopup(index) {
+      if (books[index].status !== "verfügbar") {
+        alert(`Dieses Buch ist bereits ausgeliehen an die Gruppe "${books[index].group}".\nBitte zuerst zurückgeben.`);
+        return;
+      }
+      const modal = document.getElementById("modal");
+      const content = document.getElementById("modal-content");
+      content.innerHTML = `<h3>Ausleihe an Gruppe</h3>
+        <input type="text" id="borrower-name" placeholder="Name des Ausleihenden (optional)" style="width: 100%; margin-bottom: 10px; padding: 5px;" />
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 10px 0;">
+          ${groups.map(g => `<button onclick="ausleihen(${index}, '${g.name}')" style="padding: 10px; font-size: 14px;">${g.symbol} ${g.name}</button>`).join("")}
+        </div>
+        <button onclick="closeModal()" style="width: 100%; margin-top: 10px;">Abbrechen</button>`;
+      modal.style.display = "flex";
+    }
+
+    function closeModal() {
+      document.getElementById("modal").style.display = "none";
+    }
+
+    function ausleihen(index, gruppe) {
+      if (books[index].status !== "verfügbar") {
+        alert(`Dieses Buch ist bereits an "${books[index].group}" ausgeliehen.`);
+        closeModal();
+        return;
+      }
+      const borrowerName = document.getElementById("borrower-name").value.trim();
+      if (confirm(`Wirklich an ${gruppe} ausleihen?`)) {
+        books[index].status = "ausgeliehen";
+        books[index].group = gruppe;
+        books[index].borrower = borrowerName;
+        books[index].borrowDate = new Date().toLocaleDateString('de-DE');
+        log.push(`${new Date().toLocaleString()}: ${books[index].id} an ${gruppe} ausgeliehen${borrowerName ? ' (' + borrowerName + ')' : ''}`);
+        saveData();
+        closeModal();
+        currentPage = 1;
+        renderBooks(document.getElementById("search").value);
+        renderNewBooks();
+        updateLog();
+      }
+    }
+
+    function zurueck(index) {
+      if (books[index].status === "verfügbar") return;
+      if (confirm("Wirklich zurückgeben?")) {
+        const previousGroup = books[index].group;
+        const previousBorrower = books[index].borrower;
+        books[index].status = "verfügbar";
+        books[index].group = "";
+        books[index].borrower = "";
+        books[index].borrowDate = "";
+        log.push(`${new Date().toLocaleString()}: ${books[index].id} zurückgegeben (war an ${previousGroup}${previousBorrower ? ' von ' + previousBorrower : ''})`);
+        saveData();
+        currentPage = 1;
+        renderBooks(document.getElementById("search").value);
+        renderNewBooks();
+        updateLog();
+      }
+    }
+
+    function showAdminLogin() {
+      document.getElementById("admin-login").classList.remove("hidden");
+      document.getElementById("admin-panel").classList.add("hidden");
+      adminMode = false;
+      renderBooks(document.getElementById("search").value);
+      renderNewBooks();
+    }
+
+    function checkAdmin() {
+      const pw = document.getElementById("admin-pw").value;
+      if (pw === "Märchenschloss2025") {
+        adminMode = true;
+        document.getElementById("admin-login").classList.add("hidden");
+        document.getElementById("admin-panel").classList.remove("hidden");
+        renderBooks(document.getElementById("search").value);
+        renderNewBooks();
+        updateLog();
+      } else {
+        alert("❌ Falsches Passwort");
+        document.getElementById("admin-pw").value = "";
+      }
+    }
+
+    function logoutAdmin() {
+      adminMode = false;
+      document.getElementById("admin-login").classList.remove("hidden");
+      document.getElementById("admin-panel").classList.add("hidden");
+      renderBooks(document.getElementById("search").value);
+      renderNewBooks();
+    }
+
+    function addBook() {
+      const id = document.getElementById("new-id").value.trim();
+      const title = document.getElementById("new-title").value.trim();
+      const cat = document.getElementById("new-cat").value.trim();
+      const keys = document.getElementById("new-keywords").value.trim();
+      const age = document.getElementById("new-age").value.trim();
+      if (!id || !title) return alert("Bitte ID und Titel angeben");
+      books.push({id, title, category: cat, keywords: keys, age, status: "verfügbar", group: "", img:"", borrower: "", borrowDate: "", isNew:false, newSince:""});
+      log.push(`${new Date().toLocaleString()}: ${id} hinzugefügt`);
+      saveData();
+      currentPage = 1;
+      renderBooks(document.getElementById("search").value);
+      renderNewBooks();
+      updateLog();
+      document.getElementById("new-id").value = "";
+      document.getElementById("new-title").value = "";
+      document.getElementById("new-cat").value = "";
+      document.getElementById("new-keywords").value = "";
+      document.getElementById("new-age").value = "";
+    }
+
+    function exportData() {
+      const exportData = {
+        books: books,
+        log: log,
+        exportDate: new Date().toISOString(),
+        version: "1.0"
+      };
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataBlob = new Blob([dataStr], {type: 'application/json'});
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(dataBlob);
+      link.download = `bibliothek-backup-${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+      log.push(`${new Date().toLocaleString()}: Backup erstellt`);
+      updateLog();
+      saveData();
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const importedData = JSON.parse(e.target.result);
+          if (importedData.books && Array.isArray(importedData.books)) {
+            if (confirm(`Backup vom ${importedData.exportDate ? new Date(importedData.exportDate).toLocaleDateString('de-DE') : 'unbekannt'} laden?\n\nDies wird alle aktuellen Daten ersetzen!`)) {
+              books = importedData.books;
+              if (importedData.log && Array.isArray(importedData.log)) {
+                log = importedData.log;
+              }
+              log.push(`${new Date().toLocaleString()}: Backup geladen`);
+              saveData();
+              currentPage = 1;
+              renderBooks(document.getElementById("search").value);
+              renderNewBooks();
+              updateLog();
+              alert("Backup erfolgreich geladen!");
+            }
+          } else {
+            alert("Ungültiges Backup-Format!");
+          }
+        } catch (error) {
+          alert("Fehler beim Laden des Backups: " + error.message);
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    function updateLog() {
+      document.getElementById("log-output").textContent = log.join("\n");
+    }
+
+    function resetData() {
+      if (confirm("Wirklich ALLES löschen und zurücksetzen?")) {
+        localStorage.removeItem("books");
+        localStorage.removeItem("log");
+        books = [
+          {id:"B-001", title:"Titel 1", category:"Bilderbuch", keywords:"Löwe, Elefant", status:"verfügbar", age:"3-6", group:"", img:"", borrower:"", borrowDate:"", isNew:false, newSince:""},
+          {id:"B-002", title:"Titel 2", category:"Sachbuch", keywords:"Ritter, Pferd", status:"verfügbar", age:"5-8", group:"", img:"", borrower:"", borrowDate:"", isNew:false, newSince:""}
+        ];
+        log = [];
+        saveData();
+        currentPage = 1;
+        renderBooks(document.getElementById("search").value);
+        renderNewBooks();
+        updateLog();
+      }
+    }
+
+    document.getElementById("search").addEventListener("input", function(e) {
+      currentPage = 1;
+      renderBooks(e.target.value);
+      renderNewBooks();
+    });
+
+    renderBooks();
+    renderNewBooks();
+  </script>
+</body>
+</html>
