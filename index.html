@@ -49,6 +49,7 @@
     .book-details { overflow: hidden; }
     .admin-controls { margin-top: 10px; }
     .edit-fields input, .edit-fields label { margin: 2px 0; display: block; width: 90%; padding: 4px; }
+    .edit-fields textarea { margin: 2px 0; display: block; width: 95%; padding: 4px; }
     .edit-fields.hidden { display: none; }
     .edit-fields .neu-checkbox { width: auto; display: inline-block; margin-left: 0; margin-right: 8px; }
     .edit-fields .neu-label { display: inline-block; width: auto; margin-right: 0; font-weight: bold; color: #e88; }
@@ -85,15 +86,83 @@
       font-size: 13px; margin-left: 8px; padding: 1px 6px; border: 1px solid #e6b;
       vertical-align: middle;
     }
+    /* Neue Bücher Cards */
+    #new-books-cards {
+      display: flex;
+      overflow-x: auto;
+      gap: 16px;
+      padding: 8px 0 8px 0;
+      margin: 0 0 10px 0;
+    }
+    .book-card {
+      background: #e3f1ff;
+      border-radius: 13px;
+      box-shadow: 0 1px 8px #b2d0fa;
+      min-width: 135px;
+      max-width: 135px;
+      flex: 0 0 135px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 8px 12px 8px;
+      position: relative;
+      cursor: pointer;
+      transition: box-shadow 0.14s;
+    }
+    .book-card:hover {
+      box-shadow: 0 2px 12px #7bb7f8;
+    }
+    .book-card-img-wrap {
+      width: 90px; height: 90px; border-radius: 10px; overflow: hidden; position: relative; background: #fff;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .book-card-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .book-card-neu {
+      position: absolute;
+      top: 6px; right: 6px;
+      background: #ffe066;
+      color: #d88;
+      font-weight: bold;
+      font-size: 13px;
+      border-radius: 6px;
+      padding: 2px 8px;
+      box-shadow: 0 1px 2px #ccc;
+      z-index: 2;
+    }
+    .book-card-title {
+      font-size: 0.96em;
+      font-weight: bold;
+      color: #335;
+      margin-top: 7px;
+      text-align: center;
+      word-break: break-word;
+    }
+    .book-card-id {
+      font-size: 0.92em;
+      color: #447;
+      margin-top: 2px;
+      text-align: center;
+    }
+    /* Modal für Buchdetails */
+    #book-detail-modal { display:none; position:fixed; z-index:20; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); align-items:center; justify-content:center;}
+    #book-detail-modal-content { background:#fff; border-radius:14px; padding:24px; max-width:95vw; min-width:250px; max-height:90vh; box-sizing:border-box; overflow:auto; text-align:center;}
+    #book-detail-modal-content img { max-width:220px; max-height:220px; border-radius:8px; box-shadow:0 1px 8px #bbb; }
+    #book-detail-modal-close { position:absolute; top:22px; right:22px; font-size:2em; background:none; border:none; color:#fff; cursor:pointer; z-index:22;}
+    #book-detail-modal-content h3 { margin:13px 0 2px 0; }
+    #book-detail-modal-content .book-detail-id { color:#777; font-size:1em; margin-bottom:7px; }
+    #book-detail-modal-content .book-detail-desc { margin-top:12px; color:#444; white-space:pre-wrap;}
     @media (max-width: 768px) {
       body { padding: 15px; }
       .header { flex-direction: column; gap: 15px; align-items: stretch; }
       .search-container { max-width: 100%; }
       .admin-corner { flex-direction: row; justify-content: center; }
       #new-books {font-size: 15px;}
+      #new-books-cards {padding-left:0;padding-right:0;}
     }
-
-    /* --- Für iPhone 7 Plus & kleine Bildschirme --- */
     html, body {
       width: 100%;
       overflow-x: hidden;
@@ -142,6 +211,7 @@
         <button class="show-all-button" onclick="showAllBooks()" title="Alle anzeigen">Alle anzeigen</button>
       </div>
       <div id="new-books"></div>
+      <div id="new-books-cards"></div>
     </div>
     <div class="admin-corner">
       <button onclick="showAdminLogin()">🔑 Admin</button>
@@ -156,6 +226,11 @@
 
   <div id="modal">
     <div id="modal-content"></div>
+  </div>
+
+  <div id="book-detail-modal">
+    <button id="book-detail-modal-close" onclick="closeBookDetailModal()">×</button>
+    <div id="book-detail-modal-content"></div>
   </div>
 
   <div id="admin-panel" class="hidden">
@@ -227,8 +302,8 @@
             books = booksRequest.result;
           } else {
             books = [
-              {id:"B-001", title:"Titel 1", category:"Bilderbuch", keywords:"Löwe, Elefant", status:"verfügbar", age:"3-6", group:"", img:"", borrower:"", borrowDate:"", isNew:false, newSince:""},
-              {id:"B-002", title:"Titel 2", category:"Sachbuch", keywords:"Ritter, Pferd", status:"verfügbar", age:"5-8", group:"", img:"", borrower:"", borrowDate:"", isNew:false, newSince:""}
+              {id:"B-001", title:"Titel 1", category:"Bilderbuch", keywords:"Löwe, Elefant", status:"verfügbar", age:"3-6", group:"", img:"", borrower:"", borrowDate:"", isNew:false, newSince:"", beschreibung:""},
+              {id:"B-002", title:"Titel 2", category:"Sachbuch", keywords:"Ritter, Pferd", status:"verfügbar", age:"5-8", group:"", img:"", borrower:"", borrowDate:"", isNew:false, newSince:"", beschreibung:""}
             ];
             saveData();
           }
@@ -415,10 +490,11 @@
 
     function renderNewBooks() {
       const container = document.getElementById("new-books");
+      const cardContainer = document.getElementById("new-books-cards");
       const now = Date.now();
       const sixWeeksMs = 6 * 7 * 24 * 60 * 60 * 1000;
       let changed = false;
-      // Prüfe alle Bücher – entferne "Neu!" falls älter als 6 Wochen
+
       books.forEach(b => {
         if (b.isNew && b.newSince && (now - new Date(b.newSince).getTime() > sixWeeksMs)) {
           b.isNew = false;
@@ -426,24 +502,53 @@
           changed = true;
         }
       });
-      if (changed) saveData(); // Aktualisiere DB, falls "Neu!" entfernt wurde
+      if (changed) saveData();
+
       const newBooks = books.filter(b =>
         b.isNew &&
         b.newSince &&
         (now - new Date(b.newSince).getTime() <= sixWeeksMs)
       );
+
+      container.innerHTML = "";
+
       if (newBooks.length === 0) {
-        container.innerHTML = "";
+        cardContainer.innerHTML = "";
         return;
       }
-      container.innerHTML = `
-        <div style="background:#fffbcc;border-radius:8px;padding:10px;margin-bottom:12px;">
-          <strong>✨ Neue Bücher:</strong>
-          <ul style="margin:7px 0 0 8px;padding:0;">
-            ${newBooks.map(b => `<li>${b.id} – ${b.title} <span class="neu-badge">Neu!</span></li>`).join("")}
-          </ul>
+
+      cardContainer.innerHTML = `
+        <div style="font-size:15px;font-weight:bold;margin-bottom:6px;">✨ Neue Bücher:</div>
+        <div id="new-books-cards-inner" style="display:flex;gap:16px;">
+          ${newBooks.map((b, i) => `
+            <div class="book-card" onclick="showBookDetailModal('${b.id}')">
+              <div class="book-card-img-wrap">
+                ${b.img ? `<img src="${b.img}" alt="Buchbild">` : `<div style="width:90px;height:90px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:32px;">📕</div>`}
+                <span class="book-card-neu">Neu!</span>
+              </div>
+              <div class="book-card-id">${b.id}</div>
+              <div class="book-card-title">${b.title}</div>
+            </div>
+          `).join("")}
         </div>
       `;
+    }
+
+    function showBookDetailModal(bookId) {
+      const book = books.find(b => b.id === bookId);
+      if (!book) return;
+      const modal = document.getElementById("book-detail-modal");
+      const content = document.getElementById("book-detail-modal-content");
+      content.innerHTML = `
+        ${book.img ? `<img src="${book.img}" alt="Buchbild"><br>` : ""}
+        <h3>${book.title}</h3>
+        <div class="book-detail-id">${book.id}</div>
+        <div class="book-detail-desc">${book.beschreibung ? book.beschreibung : "<span style='color:#aaa'>Keine Beschreibung vorhanden.</span>"}</div>
+      `;
+      modal.style.display = "flex";
+    }
+    function closeBookDetailModal() {
+      document.getElementById("book-detail-modal").style.display = "none";
     }
 
     function renderBooks(filter = "") {
@@ -459,7 +564,6 @@
       const visibleBooks = filteredBooks.slice(startIdx, endIdx);
 
       visibleBooks.forEach((book, index) => {
-        // "Neu!" Badge nur wenn Buch noch innerhalb 6 Wochen
         const now = Date.now();
         let neuHtml = "";
         if (book.isNew && book.newSince && (now - new Date(book.newSince).getTime() <= 6 * 7 * 24 * 60 * 60 * 1000)) {
@@ -468,7 +572,7 @@
         const div = document.createElement("div");
         div.className = "book";
         div.innerHTML = `
-          ${book.img ? `<img src="${book.img}" class="cover" />` : ""}
+          ${book.img ? `<img src="${book.img}" class="cover" onclick="showBookDetailModal('${book.id}')" style="cursor:pointer;" />` : ""}
           <div class="book-details">
             <strong>${book.id} – ${book.title} ${neuHtml}</strong><br>
             Kategorie: ${book.category}<br>
@@ -487,6 +591,7 @@
                   <input id="edit-cat-${books.indexOf(book)}" value="${book.category}" placeholder="Kategorie" />
                   <input id="edit-keys-${books.indexOf(book)}" value="${book.keywords}" placeholder="Schlagworte" />
                   <input id="edit-age-${books.indexOf(book)}" value="${book.age || ''}" placeholder="Alter (z.B. 3-6)" />
+                  <textarea id="edit-desc-${books.indexOf(book)}" placeholder="Beschreibung" rows="2">${book.beschreibung || ""}</textarea>
                   <input type="file" accept="image/*" capture="environment" onchange="bildLaden(event, ${books.indexOf(book)})" />
                   ${book.img ? `<img src="${book.img}" style="display:block;max-width:60px;max-height:80px;box-shadow:0 0 2px #666;margin-top:4px;">` : ""}
                   <label class="neu-label"><input type="checkbox" class="neu-checkbox" id="edit-new-${books.indexOf(book)}" ${book.isNew ? "checked" : ""}> Neu!</label>
@@ -545,7 +650,7 @@
       books[index].category = document.getElementById("edit-cat-" + index).value;
       books[index].keywords = document.getElementById("edit-keys-" + index).value;
       books[index].age = document.getElementById("edit-age-" + index).value;
-      // Neu!-Status und Datum
+      books[index].beschreibung = document.getElementById("edit-desc-" + index).value;
       const neuBox = document.getElementById("edit-new-" + index);
       if (neuBox && neuBox.checked) {
         if (!books[index].isNew) {
@@ -699,8 +804,9 @@
       const cat = document.getElementById("new-cat").value.trim();
       const keys = document.getElementById("new-keywords").value.trim();
       const age = document.getElementById("new-age").value.trim();
+      const beschreibung = "";
       if (!id || !title) return alert("Bitte ID und Titel angeben");
-      books.push({id, title, category: cat, keywords: keys, age, status: "verfügbar", group: "", img:"", borrower: "", borrowDate: "", isNew:false, newSince:""});
+      books.push({id, title, category: cat, keywords: keys, age, status: "verfügbar", group: "", img:"", borrower: "", borrowDate: "", isNew:false, newSince:"", beschreibung});
       log.push(`${new Date().toLocaleString()}: ${id} hinzugefügt`);
       saveData();
       currentPage = 1;
@@ -773,8 +879,8 @@
         localStorage.removeItem("books");
         localStorage.removeItem("log");
         books = [
-          {id:"B-001", title:"Titel 1", category:"Bilderbuch", keywords:"Löwe, Elefant", status:"verfügbar", age:"3-6", group:"", img:"", borrower:"", borrowDate:"", isNew:false, newSince:""},
-          {id:"B-002", title:"Titel 2", category:"Sachbuch", keywords:"Ritter, Pferd", status:"verfügbar", age:"5-8", group:"", img:"", borrower:"", borrowDate:"", isNew:false, newSince:""}
+          {id:"B-001", title:"Titel 1", category:"Bilderbuch", keywords:"Löwe, Elefant", status:"verfügbar", age:"3-6", group:"", img:"", borrower:"", borrowDate:"", isNew:false, newSince:"", beschreibung:""},
+          {id:"B-002", title:"Titel 2", category:"Sachbuch", keywords:"Ritter, Pferd", status:"verfügbar", age:"5-8", group:"", img:"", borrower:"", borrowDate:"", isNew:false, newSince:"", beschreibung:""}
         ];
         log = [];
         saveData();
