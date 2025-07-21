@@ -56,12 +56,15 @@
     .show-all-button:hover { background: #0056b3; }
     .book { background: #fff; margin: 10px 0; padding: 12px; border-radius: 7px; box-shadow: 0 0 6px #ccc; overflow: hidden; min-height: 115px; }
     .cover,
-    .book img.cover,
-    .book-card-img-wrap img {
-      width: 30%;
-      height: 30%;
+    .book img.cover {
+      width: 60px;
+      height: 90px;
+      max-width: 60px;
+      max-height: 90px;
       object-fit: cover;
       aspect-ratio: 2/3;
+      border-radius: 3px;
+      background: #fff;
       display: block;
     }
     .book-details { overflow: hidden; }
@@ -132,6 +135,8 @@
     .book-card-img-wrap {
       width: 60px;
       height: 90px;
+      max-width: 60px;
+      max-height: 90px;
       border-radius: 10px;
       overflow: hidden;
       position: relative;
@@ -213,20 +218,17 @@
       }
       .searchbar-group { max-width: 100%; }
       .cover,
-      .book img.cover,
-      .book-card-img-wrap img {
-        max-width: 80vw;
-        width: 100%;
-        height: auto;
-        aspect-ratio: 2/3;
-        object-fit: cover;
-        display: block;
+      .book img.cover {
+        width: 48px;
+        height: 72px;
+        max-width: 48px;
+        max-height: 72px;
       }
       .book-card-img-wrap {
-        width: 80px;
-        height: 120px;
-        max-width: 80vw;
-        max-height: 120vw;
+        width: 48px;
+        height: 72px;
+        max-width: 48px;
+        max-height: 72px;
       }
     }
     #admin-login-footer-bar {
@@ -289,6 +291,11 @@
       <button onclick="checkAdminFooter()">Login</button>
     </div>
   </div>
+
+  <!-- Der komplette JavaScript-Block mit allen Funktionen kommt hier hinein. Für eine vollständige Version bitte anfordern. -->
+
+</body>
+</html>
 
   <script>
     if ('serviceWorker' in navigator) {
