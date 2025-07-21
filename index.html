@@ -986,6 +986,10 @@
       renderBooks(e.target.value);
       renderNewBooks();
     });
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+}
   </script>
 </body>
 </html>
