@@ -1,19 +1,15 @@
 const CACHE_NAME = 'pwa-cache-v1';
 const FILES_TO_CACHE = [
-  '/',                   // Startseite
-  '/index.html',         // Deine Hauptdatei
-  '/manifest.json',      // Manifest
-  '/sw.js',              // Service Worker selbst
-  // Füge hier alle weiteren wichtigen Dateien ein:
-  // '/styles.css',
-  // '/dein-script.js',
-  // '/dein-logo.png',
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/jsQR.js',
+  '/sw.js'
 ];
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(FILES_TO_CACHE))
+    caches.open(CACHE_NAME).then(cache => cache.addAll(FILES_TO_CACHE))
   );
   self.skipWaiting();
 });
